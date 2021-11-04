@@ -1,0 +1,17 @@
+---
+title: "Test"
+author: "Chenhao Zhao"
+date: "11/4/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+print("Test")
+```
+
