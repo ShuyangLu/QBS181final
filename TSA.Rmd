@@ -1,0 +1,25 @@
+---
+title: "TSA"
+author: "Chenhao Zhao"
+date: "11/10/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(timeSeries)
+library(forecast)
+library(tseries)
+nyc <- read.csv("data/new_nyc.csv")
+covid <- read.csv("data/NYC_Covid_Data.csv")
+
+rawdata <- ts(covid$CASE_COUNT_7DAY_AVG, start = c(2020,03,01), frequency = 365)
+weather <- ts(nyc, start = c(2020,03,01), frequency = 365)
+
+```
+

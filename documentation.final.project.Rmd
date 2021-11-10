@@ -1,0 +1,23 @@
+---
+title: "Documentation for Final Project"
+author: "Uhuru Kamau, Shuyang Lu, Yifan Zhao, Chenhao Zhao, Zhaofeng Liu"
+date: 
+output:
+  html_document:
+    toc: true
+    tod_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy = TRUE)
+knitr::opts_chunk$set(comment = "RESULT")
+```
+
+# Part One: Data Collection
+
+# Part Two: Data Wrangling
+
+# Part Three: Analysis
+
+# Part Four: Builing a Dashboard

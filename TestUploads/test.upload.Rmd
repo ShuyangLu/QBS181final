@@ -1,0 +1,20 @@
+---
+title: "test.upload"
+author: "Uhuru Kamau"
+date: "11/4/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# It worked
+
+```{r}
+cloumn.names = c("High_Temp", "Low_Temp", "Day_Temp_Avg")
+nyc.dat = read.csv("nyc.csv",header = F)
+nyc2.dat = read.csv("NYC_Covid_Data.csv")
+```
+
+
