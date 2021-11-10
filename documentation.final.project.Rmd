@@ -27,6 +27,7 @@ As announced by WHO, the principal mode for people infected with COVID-19 is exp
 Natural environmental factors, such as temperature, humidity may accelerate or slow down the transmission. Wang et al. (2020) saw when temperature increases by 1 °C, the cumulative COVID-19 cases decrease by 0.86%. However, Ma et al. (2021) reported a negative association with COVID-19 daily death counts for relative humidity (r = -0.32). Regarding this conflict, our team is interested in how weather conditions would affect COVID-19 transmission. 
 
 The social environment includes the groups we belong and the policies we created (Yen et al, 1999). According to Halder and Sethi (2020), government interventions have significantly affected the spread of COVID-19. Lebni mentioned (2020) that as a developing country, Iran’s government cannot support enough quarantine measures so that the infected still walk in crowded places. According to the potential impact of social environmental factors on the pandemic, we are interested in exploring difference in death and recovery rates between developing and developed countries (defined by UNCTAD, 2021).
+
 # Part Two: Data Acquisition
 
 ### Confirmed COVID-19 Cases in New York City
