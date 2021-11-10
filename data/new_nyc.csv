@@ -1,4 +1,4 @@
-﻿High Temp,Low Temp,Day Average Temp,Precipitation,Dew Point (°F),Humidity,date,city
+High Temp,Low Temp,Day Average Temp,Precipitation,Dew Point (°F),Humidity,date,city
 44,26,35.46,0,13.67,41.83333333,2020/3/1 0:00,new york city
 56,38,48.17,0,30.46,51.125,2020/3/2,new york city
 58,48,52.41,0.01,44.59,75.47058824,2020/3/3,new york city
@@ -251,7 +251,8 @@
 70,52,59.5,0,49.17,70.29166667,2020/11/5,new york city
 72,57,63.25,0,47.38,57.95833333,2020/11/6,new york city
 76,57,66.62,0,42.95,43.85714286,2020/11/7,new york city
-77,61,68.36,0,49,54.21428571,2020/11/9,new york city
+75,60,67.58,0,47.65,50.12444421,2020/11/8,new york city
+77,61,68.36,0,49.33,54.21428571,2020/11/9,new york city
 75,59,66.46,0,56.13,69.95833333,2020/11/10,new york city
 70,62,66.17,0,61.73,85.625,2020/11/11,new york city
 69,48,58.72,0.77,52.26,79.38461538,2020/11/12,new york city
