@@ -1,0 +1,23 @@
+---
+title: "T"
+author: "Chenhao Zhao"
+date: "11/4/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r cars}
+library(timeSeries)
+library(forecast)
+library(tseries)
+nyc <- read.csv("nyc.csv", header = T)
+covid <- read.csv("NYC_Covid_Data.csv")
+print("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")
+covid_ts <- ts(covid$CASE_COUNT_7DAY_AVG, start = c(2020,02,29), frequency = 365) 
+autoplot(covid_ts)
+```

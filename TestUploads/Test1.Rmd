@@ -1,6 +1,6 @@
 ---
-title: "test.upload"
-author: "Uhuru Kamau"
+title: "Test"
+author: "Chenhao Zhao"
 date: "11/4/2021"
 output: pdf_document
 ---
@@ -9,4 +9,9 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# It worked
+## R Markdown
+
+```{r}
+print("Test")
+```
+
