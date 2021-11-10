@@ -1,0 +1,23 @@
+---
+title: "Project Documentation"
+author: "Group 2"
+date: "11/05/2021"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy = TRUE)
+knitr::opts_chunk$set(comment = "RESULT")
+```
+
+# Part One: Data Collection
+
+# Part Two: Data Wrangling
+
+# Part Three: Analysis
+
+# Part Four: Builing a Dashboard
