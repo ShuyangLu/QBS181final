@@ -18,7 +18,9 @@ knitr::opts_chunk$set(comment = "RESULT")
 
 ```{r packages, message=FALSE}
 library(tidyverse)
-library(huxtable)
+library(kableExtra)
+library(readr)
+library(gridExtra)
 ```
 
 # Part One: Introduction
@@ -47,7 +49,8 @@ covid.data.voi <- covid.data[600:610,] %>%
          CASE_COUNT_7DAY_AVG)
 
 #Generate Table with variables of interest
-knitr::kable(covid.data.voi)
+knitr::kable(covid.data.voi) %>%
+  kable_styling()
 ```
 
 **Purpose:**
@@ -55,6 +58,55 @@ knitr::kable(covid.data.voi)
 + We will use this time series data to track changes in the incidence of COVID-19.
 
 + We will stratify the data by season and investigate potential associations between weather patterns and the spread of COVID-19.
+
+### New York City Weather Data
+
+**Source:**
+TBD
+
+**Load Data & Display a Few Observations of our Variables of Interest**
+```{r}
+#load the data
+weather.data <- read_rds(file = "data/nycnew.rds")
+
+#select variables of interest
+weather.data.voi <- weather.data[1:10,] %>%
+  select(-city)
+
+#display a few observations in a table
+knitr::kable(weather.data.voi)%>%
+  kable_styling()
+```
+
+**Purpose**
+
++ We will join this data frame with the "covid.data" data frame (by = date)
+  + This will allow us to observe seasonal variations in COVID-19 Incidence Rates.
+
+**Load Data & Display a Few Observations of our Variables of Interest**
+```{r}
+#load the data
+uv.data <- read.csv(file = "data/uv_total.csv", header = TRUE)
+
+#select variables of interest
+uv.dat.voi <- uv.data[1:10,] %>%
+  select(-City)
+
+#display a few observations in a table
+knitr::kable(uv.dat.voi) %>%
+  kable_styling()
+```
+
+**Purpose**
+
++ We will join this with the prior data frames and use "UV" as a proxy for sunlight
+  + There is a known association between exposure to sunlight and vitamin-D absorbtion.
+  + We will investigate the potential association between UV exposure and 
+  
+### New York City UV Index Data
+
+**Source:**
+[Central New York's Live Weather Source](http://www.cnyweather.com/wxuvdetail.php?r=wxuvdetail.php)
 
 
 # Part Three: Data Wrangling
