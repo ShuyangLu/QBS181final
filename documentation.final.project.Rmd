@@ -39,7 +39,7 @@ The social environment includes the groups we belong and the policies we created
 **Load Data & Display a Few Observations of our Variables of Interest**
 ```{r}
 #Import the data
-covid.data <- read.csv(file = "data/NYC_Covid_Data.csv",
+covid.data <- read.csv(file = "data/NYC_COVID_DATA/NYC_Covid_Data.csv",
                       header = TRUE)
 #Select variables of interest to display a meaningful visual
 covid.data.voi <- covid.data[600:610,] %>%
@@ -48,7 +48,6 @@ covid.data.voi <- covid.data[600:610,] %>%
 
 #Generate Table with variables of interest
 knitr::kable(covid.data.voi)
-as_huxtable(covid.data.voi)
 ```
 
 **Purpose:**
