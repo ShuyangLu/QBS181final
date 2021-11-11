@@ -6,6 +6,8 @@ output:
   html_document:
     toc: true
     tod_depth: 3
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -14,10 +16,57 @@ knitr::opts_chunk$set(tidy = TRUE)
 knitr::opts_chunk$set(comment = "RESULT")
 ```
 
-# Part One: Data Collection
+```{r packages, message=FALSE}
+library(tidyverse)
+library(huxtable)
+```
 
-# Part Two: Data Wrangling
+# Part One: Introduction
 
-# Part Three: Analysis
+As announced by WHO, the principal mode for people infected with COVID-19 is exposure to respiratory fluids (Sohrabi,2020). Reflected on that, natural and social environmental factors are two significant factors that influence human-to-human COVID-19 transmissions. 
 
-# Part Four: Builing a Dashboard
+Natural environmental factors, such as temperature, humidity may accelerate or slow down the transmission. Wang et al. (2020) saw when temperature increases by 1 °C, the cumulative COVID-19 cases decrease by 0.86%. However, Ma et al. (2021) reported a negative association with COVID-19 daily death counts for relative humidity (r = -0.32). Regarding this conflict, our team is interested in how weather conditions would affect COVID-19 transmission. 
+
+The social environment includes the groups we belong and the policies we created (Yen et al, 1999). According to Halder and Sethi (2020), government interventions have significantly affected the spread of COVID-19. Lebni mentioned (2020) that as a developing country, Iran’s government cannot support enough quarantine measures so that the infected still walk in crowded places. According to the potential impact of social environmental factors on the pandemic, we are interested in exploring difference in death and recovery rates between developing and developed countries (defined by UNCTAD, 2021).
+
+# Part Two: Data Acquisition
+
+### Confirmed COVID-19 Cases in New York City
+
+**Source:** 
+[NYC OpenData](https://data.cityofnewyork.us/Health/COVID-19-Daily-Counts-of-Cases-Hospitalizations-an/rc75-m7u3)
+
+**Load Data & Display a Few Observations of our Variables of Interest**
+```{r}
+#Import the data
+covid.data <- read.csv(file = "data/NYC_COVID_DATA/NYC_Covid_Data.csv",
+                      header = TRUE)
+#Select variables of interest to display a meaningful visual
+covid.data.voi <- covid.data[600:610,] %>%
+  select(DATE_OF_INTEREST,
+         CASE_COUNT_7DAY_AVG)
+
+#Generate Table with variables of interest
+knitr::kable(covid.data.voi)
+```
+
+**Purpose:**
+
++ We will use this time series data to track changes in the incidence of COVID-19.
+
++ We will stratify the data by season and investigate potential associations between weather patterns and the spread of COVID-19.
+
+
+# Part Three: Data Wrangling
+
+# Part Four: Analysis
+
+# Part Five: Builing a Dashboard
+
+## First Visualization: Heat Map
+
++ x-axis: Temperature
++ y-axis: Humidity
++ z-axis: Incidenc Rate
+
+## Sencond Visualization: 
