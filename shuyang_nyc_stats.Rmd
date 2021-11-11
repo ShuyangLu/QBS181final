@@ -1,0 +1,81 @@
+---
+title: "nyc_cleaned_weather"
+author: "Shuyang"
+date: "2021/11/10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+nyc_clean_weather <- readRDS("data/nycnew.rds")
+# change the column order-- low.Temp to be secondcolumn
+nyc_clean_weather <- nyc_clean_weather[,c(1,9,2:8)]
+```
+```{r}
+# write as new csv
+write.csv(nyc_clean_weather,"data/nyc_clean_weather.csv")
+```
+```{r}
+# write as new xlsx
+write_xlsx(nyc_clean_weather,"data/nyc_clean_weather.xlsx")
+```
+
+## Add season data
+
+Import the add season csv from the github(after we add season from excel)
+
+```{r}
+# nyc add season
+add_season_nyc_weather <- read.csv("data/nyc_clean_weather_add_season.csv")
+colnames(add_season_nyc_weather)[1] <- "High.Temp"
+# change date type from ymd to mdy
+add_season_nyc_weather$date <-format(as.Date(add_season_nyc_weather$date, '%Y/%m/%d'), "%m/%d/%Y")
+```
+## import covid data
+```{r}
+covid_df <- read.csv("data/NYC_COVID_DATA/NYC_Covid_Data.csv")
+```
+
+## combine using relation 
+```{r}
+add_season_test <- add_season_nyc_weather
+rownames(covid_df) <- covid_df$DATE_OF_INTEREST
+add_season_test$Case_Count_7Day_Avg <- covid_df[,"CASE_COUNT_7DAY_AVG"]
+```
+## non-parametric test
+```{r}
+wilcox.test(add_season_test$Day.Average.Temp,add_season_test$Case_Count_7Day_Avg)
+```
+
+
+
+## non-parametric test
+by season
+```{r}
+library(tidyverse)
+summer_data <- add_season_nyc_weather %>%
+  filter(season=="summer")
+winter_data <- add_season_nyc_weather %>%
+  filter(season=="winter")
+```
+
+
+## return rownames
+```{r}
+
+```
+
+
+```{r}
+wilcox.test(summer_data$Day.Average.Temp,winter_data$Day.Average.Temp)
+```
+
