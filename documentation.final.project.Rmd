@@ -18,6 +18,7 @@ knitr::opts_chunk$set(comment = "RESULT")
 
 ```{r packages, message=FALSE}
 library(tidyverse)
+library(huxtable)
 ```
 
 # Part One: Introduction
@@ -47,6 +48,7 @@ covid.data.voi <- covid.data[600:610,] %>%
 
 #Generate Table with variables of interest
 knitr::kable(covid.data.voi)
+as_huxtable(covid.data.voi)
 ```
 
 **Purpose:**
