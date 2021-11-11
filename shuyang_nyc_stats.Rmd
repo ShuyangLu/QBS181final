@@ -22,11 +22,12 @@ nyc_clean_weather <- nyc_clean_weather[,c(1,9,2:8)]
 ```
 ```{r}
 # write as new csv
-write.csv(nyc_clean_weather,"data/nyc_clean_weather.csv")
+#write.csv(nyc_clean_weather,"data/nyc_clean_weather.csv")
 ```
 ```{r}
 # write as new xlsx
-write_xlsx(nyc_clean_weather,"data/nyc_clean_weather.xlsx")
+library(writexl)
+#write_xlsx(nyc_clean_weather,"data/nyc_clean_weather.xlsx")
 ```
 
 ## Add season data
@@ -51,31 +52,182 @@ add_season_test <- add_season_nyc_weather
 rownames(covid_df) <- covid_df$DATE_OF_INTEREST
 add_season_test$Case_Count_7Day_Avg <- covid_df[,"CASE_COUNT_7DAY_AVG"]
 ```
-## non-parametric test
-```{r}
-wilcox.test(add_season_test$Day.Average.Temp,add_season_test$Case_Count_7Day_Avg)
-```
 
-
-
+# summer and winter mean cases wilcox test
 ## non-parametric test
 by season
 ```{r}
 library(tidyverse)
-summer_data <- add_season_nyc_weather %>%
+summer_data <- add_season_test %>%
   filter(season=="summer")
-winter_data <- add_season_nyc_weather %>%
+winter_data <- add_season_test %>%
   filter(season=="winter")
 ```
-
-
-## return rownames
 ```{r}
+# create summer and winter data
+sum_win <- rbind(summer_data,winter_data)
+```
+## wilcox
+```{r}
+wilcox.test(sum_win[which(sum_win$season=="summer"),]$Case_Count_7Day_Avg,sum_win[which(sum_win$season=="winter"),]$Case_Count_7Day_Avg)
+```
+# Temperature VS Cases
+## scatter plot
+```{r}
+scatter.smooth(x=add_season_test$Day.Average.Temp, y=add_season_test$Case_Count_7Day_Avg, main="Temperature ~ Number of COVID Scatter Plot",xlab="Temperature",ylab ="Number of COVID cases")
+```
 
+## boxplot
+```{r}
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(add_season_test$Day.Average.Temp,main="Temperature")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+```
+## density of temperature and cases
+```{r}
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+plot(density(add_season_test$Day.Average.Temp), main="Density Plot: Temperature", ylab="Frequency", sub=paste("Skewness:", round(e1071::skewness(cars$speed), 2))) 
+polygon(density(add_season_test$Day.Average.Temp), col="green")
+plot(density(add_season_test$Case_Count_7Day_Avg), main="Density Plot:COVID cases", ylab="Frequency", sub=paste("Skewness:", round(e1071::skewness(cars$speed), 2)))
+polygon(density(add_season_test$Case_Count_7Day_Avg), col="red")
+```
+## correlation between temperature and cases
+```{r}
+cor(add_season_test$Day.Average.Temp, add_season_test$Case_Count_7Day_Avg)
+```
+## single variable linear regression model temperature~ cases
+```{r}
+linearMod <- lm(add_season_test$Day.Average.Temp ~ add_season_test$Case_Count_7Day_Avg, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+## check temp~ cases pvalue
+```{r}
+summary(linearMod)$coefficients
+```
+# improve temp~cases model using log cases
+## create new log cases column
+```{r}
+# log cases
+add_season_test$log_cases <- log(add_season_test$Case_Count_7Day_Avg)
+for (i in 1:nrow(add_season_test)){
+  if(add_season_test$Case_Count_7Day_Avg[i]==0){
+    add_season_test$log_cases[i] = 0
+  }
+}
+```
+
+## scatter plot of temp~ new log cases 
+```{r}
+## test log cases
+scatter.smooth(x=add_season_test$Day.Average.Temp, y=add_season_test$log_cases, main="Temperature ~ Number of COVID Scatter Plot",xlab="Humidity_index",ylab ="Number of COVID cases")
+```
+## linear model of temp~ new log cases
+```{r}
+# linear model of humidity_index
+linearMod <- lm(add_season_test$Day.Average.Temp ~ add_season_test$log_cases, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+## linear model temp~ new log cases pvalue
+```{r}
+# coefficients test
+summary(linearMod)$coefficients
+```
+# humidity index VS cases
+## humidity/dew point/precipitation correlation
+```{r}
+# humidity/dew point/precipitation
+#install.packages("PerformanceAnalytics")
+library("PerformanceAnalytics")
+humidity_subset=add_season_test[,c(4,5,6)]
+chart.Correlation(humidity_subset,histogram=TRUE,pch=19)
+```
+## create humidity index 
+```{r}
+# create humidity index column
+add_season_test$humidity_index <- add_season_test$Precipitation+add_season_test$Dew.Point...F.+add_season_test$Humidity*0.01
+# because humidity is a percentage, so we use humidity*0.01
+```
+
+## finding missing value in humidity column and fill 
+```{r}
+# finding missing value
+na_humidity <- c(which(is.na(add_season_test$humidity_index)))
+na_humidity
+```
+```{r}
+# fill the missing value-- 2 days mean
+for (i in na_humidity){
+  add_season_test$Humidity[i] <- mean(add_season_test$Humidity[(i-2):(i-1)],2)
+}
+```
+```{r}
+# refill the humidity index again after fill the missing value
+add_season_test$humidity_index <- add_season_test$Precipitation+add_season_test$Dew.Point...F.+add_season_test$Humidity*0.01
+```
+```{r}
+# check whether has missing value this time
+count(add_season_test[is.na(add_season_test$humidity_index),])
+```
+
+## scatter plot of humidity and cases
+```{r}
+# scatter plot of  humidity index
+scatter.smooth(x=add_season_test$humidity_index, y=add_season_test$Case_Count_7Day_Avg, main="HumidityIndex ~ Number of COVID Scatter Plot",xlab="Humidity_index",ylab ="Number of COVID cases")
+```
+## boxplot humidity~ cases
+```{r}
+# boxplot
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(add_season_test$humidity_index,main="Humidity_Index")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+```
+## correlation
+```{r}
+# correlation
+cor(add_season_test$humidity_index, add_season_test$Case_Count_7Day_Avg)
+```
+## linear model humidity ~ cases
+```{r}
+# linear model of humidity_index
+linearMod <- lm(add_season_test$humidity_index ~ add_season_test$Case_Count_7Day_Avg, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+## linear model pvalue humidity ~ cases
+```{r}
+# coefficients test
+summary(linearMod)$coefficients
+```
+# improve by using log cases
+## scatter plot of humidity ~ log cases
+```{r}
+# scatter plot of  humidity index
+scatter.smooth(x=add_season_test$humidity_index, y=add_season_test$log_cases, main="HumidityIndex ~ Number of COVID Scatter Plot",xlab="Humidity_index",ylab ="Number of COVID cases")
+```
+## boxplot humidity ~ log cases
+```{r}
+# boxplot
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(add_season_test$humidity_index,main="Humidity_Index")
+boxplot(add_season_test$log_cases,main="COVID cases")
+```
+## correlation
+```{r}
+# correlation
+cor(add_season_test$humidity_index, add_season_test$log_cases)
+```
+## linear model of humidity ~ log cases
+```{r}
+# linear model of humidity_index
+linearMod <- lm(add_season_test$humidity_index ~ add_season_test$log_cases, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+## linear model pvalue
+```{r}
+# coefficients test
+summary(linearMod)$coefficients
 ```
 
 
-```{r}
-wilcox.test(summer_data$Day.Average.Temp,winter_data$Day.Average.Temp)
-```
+
+
 
