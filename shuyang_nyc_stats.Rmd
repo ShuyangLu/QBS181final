@@ -325,13 +325,5 @@ ggplot(uv.levels.covid, aes(x = uv_levels, y = covid_cases, fill=uv_levels)) +
   scale_fill_brewer(name = "UV Levels",palette="Oranges")+
   theme_minimal()
 ```
-#vv
-```{r}
-library(tidyverse)
-total_df <- left_join(add_season_test,nyc_uv_level,by=c("date"="Date"))
-```
-## delete repeat city
-```{r}
-library(tidyverse)
-total_df <- select(total_df,-City)
-```
+
+
