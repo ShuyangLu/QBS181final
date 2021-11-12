@@ -83,14 +83,6 @@ par(mfrow=c(1, 2))  # divide graph area in 2 columns
 boxplot(add_season_test$Day.Average.Temp,main="Temperature")
 boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
 ```
-## density of temperature and cases
-```{r}
-par(mfrow=c(1, 2))  # divide graph area in 2 columns
-plot(density(add_season_test$Day.Average.Temp), main="Density Plot: Temperature", ylab="Frequency", sub=paste("Skewness:", round(e1071::skewness(cars$speed), 2))) 
-polygon(density(add_season_test$Day.Average.Temp), col="green")
-plot(density(add_season_test$Case_Count_7Day_Avg), main="Density Plot:COVID cases", ylab="Frequency", sub=paste("Skewness:", round(e1071::skewness(cars$speed), 2)))
-polygon(density(add_season_test$Case_Count_7Day_Avg), col="red")
-```
 ## correlation between temperature and cases
 ```{r}
 cor(add_season_test$Day.Average.Temp, add_season_test$Case_Count_7Day_Avg)
@@ -226,8 +218,86 @@ print(linearMod)
 # coefficients test
 summary(linearMod)$coefficients
 ```
+# AIM 2
+## uv
+```{r}
+nyc_uv_level <- read.csv("data/uv_total_level.csv")
+colnames(nyc_uv_level)[1] <- "Date"
+library(lubridate)
+nyc_uv_level$Date <- mdy(nyc_uv_level$Date)
+nyc_uv_level <- nyc_uv_level[order(nyc_uv_level$Date),]
+# change date type from ymd to mdy
+nyc_uv_level$Date <-format(as.Date(nyc_uv_level$Date, '%Y/%m/%d'), "%m/%d/%Y")
+```
+
+```{r}
+# rownames
+rownames(nyc_uv_level) <- c(1:nrow(nyc_uv_level))
+```
+# relation
+##  left join
+```{r}
+library(tidyverse)
+total_df <- left_join(add_season_test,nyc_uv_level,by=c("date"="Date"))
+```
+## delete repeat city
+```{r}
+library(tidyverse)
+total_df <- select(total_df,-City)
+```
+
+# UV VS Cases
+## scatter plot
+```{r}
+scatter.smooth(x=total_df$UV, y=total_df$Case_Count_7Day_Avg, main="UV ~ Number of COVID Scatter Plot",xlab="UV",ylab ="Number of COVID cases")
+``` 
+
+## boxplot
+```{r}
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(total_df$UV,main="UV")
+boxplot(total_df$Case_Count_7Day_Avg,main="COVID cases")
+```
 
 
+## correlation between UV and cases
+```{r}
+cor(total_df$UV, total_df$Case_Count_7Day_Avg)
+```
+## single variable linear regression model UV~ cases
+```{r}
+linearMod <- lm(total_df$UV ~ total_df$Case_Count_7Day_Avg, data=total_df)  # build linear regression model on full data
+print(linearMod)
+```
 
+## check UV~ cases pvalue
+```{r}
+summary(linearMod)$coefficients
+```
+
+# improve UV~cases to become UV~log cases
+## scatter plot
+```{r}
+scatter.smooth(x=total_df$UV, y=total_df$log_cases, main="UV ~ log cases",xlab="UV",ylab ="log cases")
+``` 
+## boxplot
+```{r}
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(total_df$UV,main="UV")
+boxplot(total_df$log_cases,main="log cases")
+```
+## correlation between UV and log cases
+```{r}
+cor(total_df$UV, total_df$log_cases)
+```
+## single variable linear regression model UV~ log cases
+```{r}
+linearMod <- lm(total_df$UV ~ total_df$log_cases, data=total_df)  # build linear regression model on full data
+print(linearMod)
+```
+## check UV~ log cases pvalue
+```{r}
+summary(linearMod)$coefficients
+```
 
 
