@@ -1,0 +1,80 @@
+---
+title: "missing date nyc data"
+author: "Yifan Zhao"
+date: "11/11/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## R Markdown
+
+```{r}
+# Read in files
+library("readxl")
+nyc.raw <- read.csv('data/nyc.raw.csv')
+```
+
+
+```{r}
+# Since we intend to do a time series, we need to identify the missing date in the date column
+# Transform the date column to the standard format
+nyc.raw$date<-as.Date(nyc.raw$date,"%m/%d/%Y")
+
+# Create a custom function to find the missing date in the date column
+find.missing.dates <- function(d) {
+  date_range <- seq(min(d), max(d), by = 1) 
+  date_range[!date_range %in% d] 
+}
+
+# Display the missing dates
+date.missing=c()
+date.missing<-find.missing.dates(nyc.raw$date)
+print(date.missing)
+```
+
+#Fill the missing data by averaging the former 6 days' data
+```{r}
+# Find the index of the day before "2020-11-08"
+nyc.raw$date<- as.character(nyc.raw$date)
+id.missing.date = which(nyc.raw$date == "2020-11-07")+1
+
+# Custom function to fill the missing data by averaging the former 6 days' data
+fill.missing.values <- function(df,newrow.id){
+  newrow <- list()
+  value <- c()
+  first.row=newrow.id-6 
+  last.row=newrow.id-1
+  col.num=ncol(df)-2
+  for (i in 1:col.num){
+    subs<-nyc.raw[first.row:last.row,i] # Create a new subset for each column
+    value<-mean(subs) # Calculate the mean
+    newrow<-append(newrow,value)
+  }
+  return (newrow)
+}
+
+# Fill the missing values in the missing row
+missing.row <- fill.missing.values(nyc.raw,id.missing.date)
+missing.row <-append(missing.row,"2020-11-08")
+missing.row <-append(missing.row,"new york city")
+
+# Custom function to insert the new row
+insertRow <- function(existingDF, newrow, r) {
+  existingDF[seq(r+1,nrow(existingDF)+1),] <- existingDF[seq(r,nrow(existingDF)),]
+  existingDF[r,] <- newrow
+  existingDF
+}
+
+# Insert the missing row and store it into a new df
+nyc.data.complete<-insertRow(nyc.raw,missing.row,id.missing.date)
+```
+
+
+
+
+
+
