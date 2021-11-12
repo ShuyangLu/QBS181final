@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # Read in files
-library("readxl")
 nyc.raw <- read.csv('data/nyc.raw.csv')
 ```
 
