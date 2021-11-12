@@ -114,11 +114,3 @@ knitr::kable(uv.dat.voi) %>%
 # Part Four: Analysis
 
 # Part Five: Builing a Dashboard
-
-## First Visualization: Heat Map
-
-+ x-axis: Temperature
-+ y-axis: Humidity
-+ z-axis: Incidenc Rate
-
-## Sencond Visualization: 

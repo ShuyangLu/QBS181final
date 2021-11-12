@@ -242,10 +242,12 @@ nyc_uv_level$Date <-format(as.Date(nyc_uv_level$Date, '%Y/%m/%d'), "%m/%d/%Y")
 rownames(nyc_uv_level) <- c(1:nrow(nyc_uv_level))
 ```
 # relation
-##  left join
+##  left join sqldf
 ```{r}
-library(tidyverse)
-total_df <- left_join(add_season_test,nyc_uv_level,by=c("date"="Date"))
+library(sqldf)
+sqldf("select * from add_season_test
+      left join nyc_uv_level 
+      on add_season_test.date = nyc_uv_level.Date")
 ```
 ## delete repeat city
 ```{r}
