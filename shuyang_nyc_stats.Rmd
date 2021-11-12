@@ -15,15 +15,12 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r}
-nyc_clean_weather <- readRDS("data/nycnew.rds")
-# change the column order-- low.Temp to be secondcolumn
-nyc_clean_weather <- nyc_clean_weather[,c(1,9,2:8)]
-```
+
 ```{r}
 # write as new csv
 #write.csv(nyc_clean_weather,"data/nyc_clean_weather.csv")
 ```
+
 ```{r}
 # write as new xlsx
 library(writexl)
@@ -41,6 +38,21 @@ colnames(add_season_nyc_weather)[1] <- "High.Temp"
 # change date type from ymd to mdy
 add_season_nyc_weather$date <-format(as.Date(add_season_nyc_weather$date, '%Y/%m/%d'), "%m/%d/%Y")
 ```
+
+## Clean column name using nlp
+```{r}
+# Get the index of the columns starts with "Dew"
+cols.E.index <- grep("Dew",colnames(add_season_nyc_weather))
+
+# Save the original column name in a vector
+v <- colnames(add_season_nyc_weather[cols.E.index])
+
+# Modify the column name to "Dew.Point"
+colnames(add_season_nyc_weather)[cols.E.index] <- gsub("Dew.Point...F.","Dew.Point",v)
+print(colnames(add_season_nyc_weather[cols.E.index]))
+```
+
+
 ## import covid data
 ```{r}
 covid_df <- read.csv("data/NYC_COVID_DATA/NYC_Covid_Data.csv")
