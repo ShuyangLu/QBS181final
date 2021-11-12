@@ -1,11 +1,14 @@
 ---
-title: "Project Documentation"
-author: "Group 2"
-date: "11/05/2021"
+title: "Weather Patterns X COVID-19"
+subtitle: "Final Project Documentation"
+author: "Uhuru Kamau, Shuyang Lu, Yifan Zhao, Chenhao Zhao, Zhaofeng Liu"
+date: 
 output:
   pdf_document:
     toc: true
     toc_depth: 3
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -14,10 +17,68 @@ knitr::opts_chunk$set(tidy = TRUE)
 knitr::opts_chunk$set(comment = "RESULT")
 ```
 
-# Part One: Data Collection
+```{r packages, message=FALSE}
+#Load Required Packages
+library(tidyverse)
+library(kableExtra)
+library(readr)
+library(gridExtra)
+```
 
-# Part Two: Data Wrangling
+# **Data Acquisition**
 
-# Part Three: Analysis
+### 1. New York City COVID-19 Data Archive
 
-# Part Four: Builing a Dashboard
++ Source: [\textcolor{blue}{NYC OpenData}](https://data.cityofnewyork.us/Health/COVID-19-Daily-Counts-of-Cases-Hospitalizations-an/rc75-m7u3)
+
++ Acquisation Method
+  + Download .csv file
+  
++ Purpose:
+
+  + We will use this time series data to track changes in the incidence of COVID-19.
+
+### 2. New York City Weather Data
+
++ Source:
+[Weather Underground - Weather Archive](https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA)
+
++ Acquisition Method
+
+  + Webscraping/ API Tool
+
++ Purpose:
+
+  + Merge time series weather data with timeseries Covid-19 data and investigate potential associations
+  
+### 3. Daily UV Index Scores - New York City
+
++ Source:
+[Central New York's Live Weather Source](http://www.cnyweather.com/wxuvdetail.php?r=wxuvdetail.php)
+
++ Acquisition Method
+
+  + UV index values are presented as tables (see figure)
+  
+  + Copy tables and paste into Microsoft Excel
+  
+  + Save as .csv file
+
++ Purpose
+
+  + Sunlight and Vitamin-D absorbtion
+
+    + It is generally accepted that there is a positive association between exposure to sunlight and absorbtion of vitamin-D. 
+  
+    + It is also generally accepted that there is a positive association between vitamin-D absorbtion and immune system capacity.
+  
+  + We will us UV-Index as a proxy for exposure to sunlight at the population level and test for associations between UV Index and the incidence of Covid-19.
+
+\newpage
+
+# Relational Schema
+
+```{r, fig.align='center', out.width="100%", out.height="100%", fig.cap="Highlighting the Keys to our Relational Database"}
+knitr::include_graphics(path = "Relational_Schema.png")
+```
+
