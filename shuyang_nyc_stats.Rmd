@@ -99,25 +99,8 @@ scatter.smooth(x=add_season_test$Day.Average.Temp, y=add_season_test$Case_Count_
 ## boxplot
 ```{r}
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(add_season_test$Day.Average.Temp,main="Temperature")
-boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
-```
-## boxplot ggplot2
-```{r}
- # divide graph area in 2 columns
-library(ggpubr)
-color.custom <- c("#264653")
-fill.custom <- c("#2a9d8f")
-p1 <- ggboxplot(add_season_test$Day.Average.Temp, xlab="Daily Average Temperature", ylab="Fahrenheit Degree",title = "Boxplot of Daily Average Temperature")
-
-p1
-
-color.custom <- c("#264653")
-fill.custom <- c("#2a9d8f")
-p2 <- ggboxplot(add_season_test$Day.Average.Temp, xlab="Daily Average Temperature", ylab="Fahrenheit Degree",title = "Boxplot of Daily Average Temperature")+
-  geom_boxplot(width=0.15)
-
-p2
+boxplot(add_season_test$Day.Average.Temp,main="Temperature",col="#f4a261")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases",col="#5390d9")
 ```
 
 ## correlation between temperature and cases
@@ -173,7 +156,7 @@ chart.Correlation(humidity_subset,histogram=TRUE,pch=19)
 ## create humidity index 
 ```{r}
 # create humidity index column
-add_season_test$humidity_index <- add_season_test$Precipitation+add_season_test$Dew.Point...F.+add_season_test$Humidity*0.01
+add_season_test$humidity_index <- add_season_test$Precipitation+add_season_test$Dew.Point+add_season_test$Humidity*0.01
 # because humidity is a percentage, so we use humidity*0.01
 ```
 
@@ -191,7 +174,7 @@ for (i in na_humidity){
 ```
 ```{r}
 # refill the humidity index again after fill the missing value
-add_season_test$humidity_index <- add_season_test$Precipitation+add_season_test$Dew.Point...F.+add_season_test$Humidity*0.01
+add_season_test$humidity_index <- add_season_test$Precipitation+add_season_test$Dew.Point+add_season_test$Humidity*0.01
 ```
 ```{r}
 # check whether has missing value this time
@@ -207,8 +190,8 @@ scatter.smooth(x=add_season_test$humidity_index, y=add_season_test$Case_Count_7D
 ```{r}
 # boxplot
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(add_season_test$humidity_index,main="Humidity_Index")
-boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+boxplot(add_season_test$humidity_index,main="Humidity_Index",col="#f9c74f")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases",col="#90be6d")
 ```
 ## correlation
 ```{r}
@@ -236,8 +219,8 @@ scatter.smooth(x=add_season_test$humidity_index, y=add_season_test$log_cases, ma
 ```{r}
 # boxplot
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(add_season_test$humidity_index,main="Humidity_Index")
-boxplot(add_season_test$log_cases,main="COVID cases")
+boxplot(add_season_test$humidity_index,main="Humidity_Index",col="#ddb892")
+boxplot(add_season_test$log_cases,main="COVID cases",col="#a8dadc")
 ```
 ## correlation
 ```{r}
@@ -299,8 +282,8 @@ scatter.smooth(x=total_df$UV, y=total_df$Case_Count_7Day_Avg, main="UV ~ Number 
 ## boxplot
 ```{r}
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(total_df$UV,main="UV")
-boxplot(total_df$Case_Count_7Day_Avg,main="COVID cases")
+boxplot(total_df$UV,main="UV",col="#cdb4db")
+boxplot(total_df$Case_Count_7Day_Avg,main="COVID cases",col="#bde0fe")
 ```
 
 
@@ -327,8 +310,8 @@ scatter.smooth(x=total_df$UV, y=total_df$log_cases, main="UV ~ log cases",xlab="
 ## boxplot
 ```{r}
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(total_df$UV,main="UV")
-boxplot(total_df$log_cases,main="log cases")
+boxplot(total_df$UV,main="UV",col="#d9ed92")
+boxplot(total_df$log_cases,main="log cases",col="#f2cc8f")
 ```
 ## correlation between UV and log cases
 ```{r}
@@ -346,9 +329,11 @@ summary(linearMod)$coefficients
 
 # Make a bar chart between uv categorical data and covid cases
 ```{r}
-
+# Create a new dataframe to include the varibles needed in the plot
 uv.levels.covid <- data.frame(uv_levels=total_df$levels,covid_cases=total_df$Case_Count_7Day_Avg)
-uv.levels.covid$uv_levels <- factor(uv.levels.covid$uv_levels,levels = c("low", "moderate", "high")) # sort the uv_levels from low to high
+# Sort the uv_levels from low to high
+uv.levels.covid$uv_levels <- factor(uv.levels.covid$uv_levels,levels = c("low", "moderate", "high")) 
+# Make a bar chart between uv categorical data and covid cases
 ggplot(uv.levels.covid, aes(x = uv_levels, y = covid_cases, fill=uv_levels)) +
   geom_bar(stat="summary", fun="mean")+
   labs(title="UV Levels VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="UV Levels")+
@@ -356,4 +341,16 @@ ggplot(uv.levels.covid, aes(x = uv_levels, y = covid_cases, fill=uv_levels)) +
   theme_minimal()
 ```
 
-
+# Make a bar chart between season data and covid cases
+```{r}
+# Create a new dataframe to include the varibles needed in the plot
+season.covid <- data.frame(season=sum_win$season,covid_cases=sum_win$Case_Count_7Day_Avg)
+# Sort the uv_levels from low to high
+#season.covid$uv_levels <- factor(uv.levels.covid$uv_levels,levels = c("low", "moderate", "high")) 
+# Make a bar chart between uv categorical data and covid cases
+ggplot(season.covid, aes(x = season, y = covid_cases, fill=season)) +
+  geom_bar(stat="summary", fun="mean")+
+  labs(title="Seasons VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="Seasons")+
+  scale_fill_brewer(name = "Seasons",palette="Blues")+
+  theme_minimal()
+```
