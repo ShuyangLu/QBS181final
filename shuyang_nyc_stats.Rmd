@@ -329,7 +329,7 @@ summary(linearMod)$coefficients
 
 # Make a bar chart between uv categorical data and covid cases
 ```{r}
-# Create a new dataframe to include the varibles needed in the plot
+# Create a new dataframe to include the variables needed in the plot
 uv.levels.covid <- data.frame(uv_levels=total_df$levels,covid_cases=total_df$Case_Count_7Day_Avg)
 # Sort the uv_levels from low to high
 uv.levels.covid$uv_levels <- factor(uv.levels.covid$uv_levels,levels = c("low", "moderate", "high")) 
@@ -343,11 +343,9 @@ ggplot(uv.levels.covid, aes(x = uv_levels, y = covid_cases, fill=uv_levels)) +
 
 # Make a bar chart between season data and covid cases
 ```{r}
-# Create a new dataframe to include the varibles needed in the plot
+# Create a new dataframe to include the variables needed in the plot
 season.covid <- data.frame(season=sum_win$season,covid_cases=sum_win$Case_Count_7Day_Avg)
-# Sort the uv_levels from low to high
-#season.covid$uv_levels <- factor(uv.levels.covid$uv_levels,levels = c("low", "moderate", "high")) 
-# Make a bar chart between uv categorical data and covid cases
+# Make a bar chart between season categorical data and covid cases
 ggplot(season.covid, aes(x = season, y = covid_cases, fill=season)) +
   geom_bar(stat="summary", fun="mean")+
   labs(title="Seasons VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="Seasons")+
