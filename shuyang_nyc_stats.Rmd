@@ -81,6 +81,7 @@ summer_data <- add_season_test %>%
 winter_data <- add_season_test %>%
   filter(season=="winter")
 ```
+
 ```{r}
 # create summer and winter data
 sum_win <- rbind(summer_data,winter_data)
@@ -100,6 +101,23 @@ scatter.smooth(x=add_season_test$Day.Average.Temp, y=add_season_test$Case_Count_
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
 boxplot(add_season_test$Day.Average.Temp,main="Temperature")
 boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+```
+## boxplot ggplot2
+```{r}
+ # divide graph area in 2 columns
+library(ggpubr)
+color.custom <- c("#264653")
+fill.custom <- c("#2a9d8f")
+p1 <- ggboxplot(add_season_test$Day.Average.Temp, xlab="Daily Average Temperature", ylab="Fahrenheit Degree",title = "Boxplot of Daily Average Temperature")
+
+p1
+
+color.custom <- c("#264653")
+fill.custom <- c("#2a9d8f")
+p2 <- ggboxplot(add_season_test$Day.Average.Temp, xlab="Daily Average Temperature", ylab="Fahrenheit Degree",title = "Boxplot of Daily Average Temperature")+
+  geom_boxplot(width=0.15)
+
+p2
 ```
 
 ## correlation between temperature and cases
@@ -257,7 +275,7 @@ rownames(nyc_uv_level) <- c(1:nrow(nyc_uv_level))
 ##  left join sqldf
 ```{r}
 library(sqldf)
-sqldf("select * from add_season_test
+total_df<-sqldf("select * from add_season_test
       left join nyc_uv_level 
       on add_season_test.date = nyc_uv_level.Date")
 ```
