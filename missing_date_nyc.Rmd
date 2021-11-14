@@ -23,7 +23,7 @@ nyc.raw <- read.csv('data/nyc.raw.csv')
 # Transform the date column to the standard format
 nyc.raw$date<-as.Date(nyc.raw$date,"%m/%d/%Y")
 
-# Create a custom function to find the missing date in the date column
+# Custom function to find the missing date in the date column
 find.missing.dates <- function(d) {
   date_range <- seq(min(d), max(d), by = 1) 
   date_range[!date_range %in% d] 
