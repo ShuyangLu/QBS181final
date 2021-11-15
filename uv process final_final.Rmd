@@ -19,7 +19,7 @@ When you click the **Knit** button a document will be generated that includes bo
 read the csv file from the website we collected of year 2020 ultraviolet rays as "uv" for each day in a year.
 ```{r }
 #read the csv
-uv_2020 <- read.csv("C:/Users/zhaof/OneDrive/Pictures/qbs181 group project/2020uv.csv")
+uv_2020 <- read.csv("data/2020uv.csv")
 ```
 
 # melt
@@ -81,7 +81,7 @@ test_2020$new_date=mdy(test_2020$date)
 # import 2021 csv file 
 ```{r}
 # import 2021 UV data
-uv_2021 <- read.csv("C:/Users/zhaof/OneDrive/Pictures/qbs181 group project/2021uv.csv")
+uv_2021 <- read.csv("data/2021uv.csv")
 ```
 
 # melt
