@@ -447,5 +447,8 @@ ggplot(data = add_season_test) +
 ```
 
 # Build Library
+```{r}
+help(package = "ProjectLibrary")
+```
 
 

@@ -1,12 +1,11 @@
 Package: ProjectLibrary
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Housing Custom Functions
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Authors: Uhuru Kamau
+Maintainer: Uhuru Kamau <Uhuru.G.Kamau.GR@dartmouth.edu>
+Description: This packages houses the custom functions written members of QBS181 Group #2 as part of our final project.
+License: MIT Lisence
 Encoding: UTF-8
 LazyData: true
 Imports: 
