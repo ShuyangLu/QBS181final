@@ -1,0 +1,15 @@
+\contentsline {section}{Project Workflow}{2}{section*.2}%
+\contentsline {subsubsection}{Right Side}{2}{section*.3}%
+\contentsline {subsubsection}{Left Side}{3}{section*.4}%
+\contentsline {section}{\textbf {Data Acquisition}}{3}{section*.5}%
+\contentsline {subsubsection}{1. New York City COVID-19 Data Archive}{3}{section*.6}%
+\contentsline {subsubsection}{2. New York City Weather Data}{4}{section*.7}%
+\contentsline {subsubsection}{3. Daily UV Index Scores - New York City}{4}{section*.8}%
+\contentsline {section}{Relational Schema}{5}{section*.9}%
+\contentsline {section}{Data Cleaning}{6}{section*.10}%
+\contentsline {subsubsection}{\textbf {1. New York City COVID-19 Data Archive}}{6}{section*.11}%
+\contentsline {subsubsection}{\textbf {2. New York City Weather Data}}{6}{section*.12}%
+\contentsline {subsubsection}{\textbf {3. Daily UV Index Scores - New York City}}{9}{section*.13}%
+\contentsline {section}{Data Wrangling and Objectives}{10}{section*.14}%
+\contentsline {subsubsection}{1. Is there a Difference in Number of Cases Observed in the Summer vs in the Winter?}{10}{section*.15}%
+\contentsline {subsubsection}{Is there an Association between temperature and Incidence?}{11}{section*.16}%

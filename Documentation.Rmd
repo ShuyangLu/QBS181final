@@ -1,11 +1,14 @@
 ---
-title: "Project Documentation"
-author: "Group 2"
-date: "11/05/2021"
+title: "Weather Patterns X COVID-19"
+subtitle: "Final Project Documentation"
+author: "Uhuru Kamau, Shuyang Lu, Yifan Zhao, Chenhao Zhao, Zhaofeng Liu"
+date: 
 output:
   pdf_document:
     toc: true
     toc_depth: 3
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -14,10 +17,440 @@ knitr::opts_chunk$set(tidy = TRUE)
 knitr::opts_chunk$set(comment = "RESULT")
 ```
 
-# Part One: Data Collection
+```{r packages, message=FALSE}
+#Load Required Packages
+library(tidyverse)
+library(kableExtra)
+library(readr)
+library(gridExtra)
+library(knitr)
+library(devtools)
+library(usethis)
+library(roxygen2)
+library(testthat)
+library(devtools)
+library(rmarkdown)
+```
 
-# Part Two: Data Wrangling
+\newpage
 
-# Part Three: Analysis
+# Project Workflow
 
-# Part Four: Builing a Dashboard
+### Right Side
+
+```{r, fig.align='left', out.width="112%", out.height="150%", fig.cap="QBS181 Final Project: WorkFlow (Part A)"}
+knitr::include_graphics(path = "images/QBS181_1.png")
+```
+
+\newpage
+
+### Left Side
+
+```{r, fig.align='left', out.width="110%", out.height="150%", fig.cap="QBS181 Final Project: WorkFlow (Part B)"}
+knitr::include_graphics(path = "images/QBS181_2.png")
+```
+
+# **Data Acquisition**
+
+### 1. New York City COVID-19 Data Archive
+
++ Source: [\textcolor{blue}{NYC OpenData}](https://data.cityofnewyork.us/Health/COVID-19-Daily-Counts-of-Cases-Hospitalizations-an/rc75-m7u3)
+
++ Acquisation Method
+  + Download .csv file
+  
++ Purpose:
+
+  + We will use this time series data to track changes in the incidence of COVID-19.
+
+### 2. New York City Weather Data
+
++ Source:
+[\textcolor{blue}{Weather Underground - Weather Archive}](https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA)
+
++ Acquisition Method
+
+  + Webscraping/ API Tool
+
++ Purpose:
+
+  + Merge time series weather data with timeseries Covid-19 data and investigate potential associations
+  
+### 3. Daily UV Index Scores - New York City
+
++ Source:
+[\textcolor{blue}{Central New York's Live Weather Source}](http://www.cnyweather.com/wxuvdetail.php?r=wxuvdetail.php)
+
++ Acquisition Method
+
+  + UV index values are presented as tables (see figure)
+  
+  + Copy tables and paste into Microsoft Excel
+  
+  + Save as .csv file
+
++ Purpose
+
+  + Sunlight and Vitamin-D absorbtion
+
+    + It is generally accepted that there is a positive association between exposure to sunlight and absorbtion of vitamin-D. 
+  
+    + It is also generally accepted that there is a positive association between vitamin-D absorbtion and immune system capacity.
+  
+  + We will us UV-Index as a proxy for exposure to sunlight at the population level and test for associations between UV Index and the incidence of Covid-19.
+
+\newpage
+
+# Relational Schema
+
+```{r, fig.align='center', out.width="100%", out.height="100%", fig.cap="Highlighting the Keys to our Relational Database"}
+knitr::include_graphics(path = "images/Relational_Schema.png")
+```
+
+\newpage
+
+# Data Cleaning
+
+### **1. New York City COVID-19 Data Archive**
+
+A. Read in the Covid-19 Date Frame
+
+```{r}
+covid_df <- read.csv("data/Raw Data/nyc_covid19_data/NYC_Covid_Data_raw.csv")
+```
+
+### **2. New York City Weather Data**
+
+A. Read-in File from Raw Data File
+
+  + The raw file has an issue with the column headers.
+  
+    + Several Headers include symbols that don't work with the interpretor
+    
+        + eg. $Low\_Temp\textcolor{red}{(^{o}F)},\ High\_Temp\textcolor{red}{(^{o}F)}$
+  
+  + \textcolor{green}{Solution:} Update column names while reading in the file!
+
+```{r}
+#vector with acceptable column names
+headers <- c("High.Temp", "Low.Temp", "Avg.Temp", "Precip",
+             "Dew.Point", "Humidity", "Date", "City")
+
+#read in the raw data file
+weather.raw <- read.csv(file = "data/Raw Data/nyc_weather_raw.csv",
+                        header = TRUE, 
+                        col.names = headers) 
+```
+
+B. Format all observations of the "Date" Variable
+
++ Variable is of class "character" by default
+
+```{r}
+class(weather.raw$Date)
+```
+
++ Reclassify the variable as a "Date"
+
+```{r}
+weather.clean <- weather.raw %>%
+  mutate(Date = as.Date(Date, "%m/%d/%Y"))
+```
+
++ Outcome:
+```{r}
+class(weather.clean$Date)
+```
+
+C. Missing Data
+
++ Since we intend to do a time series, we need to identify any missing dates in the "date" column.
+
+  + We will do this using a \textcolor{red}{CUSTOM FUNCTION!}
+
+```{r}
+#Custom function to find the missing date in the date column
+find.missing.dates <- function(d) {
+  date_range <- seq(min(d), max(d), by = 1) 
+  date_range[!date_range %in% d] 
+}
+```
+
++ Use the custom function to identify missing dates in our NYC Weather df
+
+```{r}
+# Display the missing dates
+date.missing = c()
+date.missing<-find.missing.dates(weather.clean$Date)
+print(date.missing)
+```
+
+D. Replace Missing Values 
+
++ Method: Fill the missing data by averaging the former 6 days' data
+
+```{r}
+#Find the index of the day before "2020-11-08"
+weather.clean$Date<- as.character(weather.clean$Date)
+id.missing.date = which(weather.clean$Date == "2020-11-07")+1
+```
+
++ Build a \textcolor{red}{custom function} to fill the missing data
+
+  + Approach: use the average of the previous six days
+  
+```{r}
+# Custom function to fill the missing data by averaging the former 6 days' data
+fill.missing.values <- function(df,newrow.id){
+  newrow <- list()
+  value <- c()
+  first.row=newrow.id-6 
+  last.row=newrow.id-1
+  col.num=ncol(df)-2
+  for (i in 1:col.num){
+    subs<-weather.clean[first.row:last.row,i] # Create a new subset for each column
+    value<-mean(subs) # Calculate the mean
+    newrow<-append(newrow,value)
+  }
+  return(newrow)
+}
+```
+
++ Use the custom function to fill in the values of the missing row
+
+```{r}
+# Fill the missing values in the missing row
+missing.row <- fill.missing.values(weather.clean,id.missing.date)
+missing.row <-append(missing.row,"2020-11-08")
+missing.row <-append(missing.row,"new york city")
+```
+
++ Build another \textcolor{red}{custom function} to insert the row into the df
+```{r}
+# Custom function to insert the new row
+insertRow <- function(existingDF, newrow, r) {
+  existingDF[seq(r+1,nrow(existingDF)+1),] <- existingDF[seq(r,nrow(existingDF)),]
+  existingDF[r,] <- newrow
+  existingDF
+}
+```
+
++ Insert the imputed value into the df!
+
+```{r}
+# Insert the missing row and store it into a new df
+weather.clean <-insertRow(weather.clean,
+                             missing.row,
+                             id.missing.date)
+```
+
+E. Remove the "City" Variable
+
+  + Every observation is is "new york city"
+  
+    + This variable is effectively just clutter.
+
+```{r}
+weather.clean = weather.raw %>%
+  select(-City)
+```
+
+F. Display
+```{r}
+kable(x = weather.clean[1:5,],digits = 2,align = "c")
+```
+
+G. Write the Processed Data to a new .csv file
+```{r, eval=FALSE}
+write.csv(x = weather.clean,
+          file = "data/Processed Data/nyc_weather.csv")
+```
+
+H. In Excel - Add a "Season" variable to the .csv generated in the prior section
+
++ Open File in Microsoft Excel
+
+  + \textcolor{red}{Summarise the process}
+  
++ Save the file as "nyc_clean_weather_add_season.csv"
+
+  + Push to Github
+
+I. Read in "nyc_clean_weather_add_season.csv" and reformat the "date" variable
+
++ Read in the file
+```{r}
+#vector with acceptable column names
+headers <- c("High.Temp", "Low.Temp", "Avg.Temp", "Precip",
+             "Dew.Point", "Humidity", "date", "City",
+             "Month", "season")
+add_season_nyc_weather <- read.csv(file = "data/nyc_clean_weather_add_season.csv", 
+                                   header = T, 
+                                   col.names = headers) %>%
+  select(-City)
+```
+
++ Reformat the "date" variable
+```{r}
+# change date type from ymd to mdy
+add_season_nyc_weather$date <-format(as.Date(add_season_nyc_weather$date, '%Y/%m/%d'), "%m/%d/%Y")
+```
+
+J. Display
+
+```{r}
+knitr::kable(x = add_season_nyc_weather[1:5,],align = "c")
+```
+
+### **3. Daily UV Index Scores - New York City**
+
+A. Read in the csv file that we built in excel
+
+```{r}
+nyc.uv = read.csv(file = "data/Raw Data/nyc_uv_raw.csv", header = T)
+```
+
+B. Remove the "City" Variable
+
++ Every observation is "New York City" so this variable is effectively clutter. 
+
+```{r}
+nyc.uv <- nyc.uv %>%
+  select(-City)
+```
+
+C. Display
+
+```{r}
+knitr::kable(x = nyc.uv[1:5,], align = "c")
+```
+
+# Data Wrangling and Objectives
+
+### 1. Is there a Difference in Number of Cases Observed in the Summer vs in the Winter?
+
+A. Add the "CASE_COUNT_7DAY_AVG" variable from the covid df to the add_season_nyc_weather df
+
++ Visual Aid
+
+```{r, fig.align='center', out.width="100%", out.height="100%", fig.cap="CASE_COUNT_7DAY_AVG variable from the covid df to the add_season_nyc_weather df"}
+knitr::include_graphics(path = "images/weather_and_7day_avg.png")
+```
+
++ Combine
+```{r}
+add_season_test <- add_season_nyc_weather
+rownames(covid_df) <- covid_df$DATE_OF_INTEREST
+add_season_test$Case_Count_7Day_Avg <- covid_df[,"CASE_COUNT_7DAY_AVG"]
+```
+
+B. Create a df with ONLY the summer and winter observations
+
+```{r}
+sum_win <- add_season_test %>%
+  filter(season == "summer" | season == "winter")
+```
+
+C. Run a Wilcox Test to test the difference in incidence (summer vs winter)
+
+```{r}
+wilcox.test(sum_win[which(sum_win$season=="summer"),]$Case_Count_7Day_Avg,sum_win[which(sum_win$season=="winter"),]$Case_Count_7Day_Avg)
+```
+
++ We can reject the null hypothesis that there is no difference in incidence.
+
+### Is there an Association between temperature and Incidence?
+
++ Scatter Plot
+```{r}
+ggplot(data = add_season_test) +
+  geom_point(mapping = aes(x = Avg.Temp,
+                           y = Case_Count_7Day_Avg,
+                           color = season)
+             ) +
+  labs(x = "Daily Average Temperature",
+       y = "Case Count (7-Day Average)",
+       title = "Temperature vs Incidence of COVID-19",
+       subtitle = "Stratified by Season") +
+  theme_bw() + 
+  geom_smooth(mapping = aes(x = Avg.Temp,
+                            y = Case_Count_7Day_Avg),
+              method = "lm",
+              inherits.aes = F)
+```
+  geom_smooth(mapping = aes(x = Avg.Temp,
+                           y = Case_Count_7Day_Avg))
+```
+
++ Boxplot
+
+```{r}
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(add_season_test$Avg.Temp,main="Temperature")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+```
+
++ Bar Graph
+
+```{r}
+ggplot(data = add_season_test) +
+  geom_col(mapping = aes(x = Avg.Temp,
+                         y = Case_Count_7Day_Avg,
+                         fill = season),
+           width = 1.5)
+```
+
++ Correlation between Temperature and Case Count
+
+```{r}
+cor(add_season_test$Avg.Temp, add_season_test$Case_Count_7Day_Avg)
+```
+
++ Single Variable Linear Regression Model Temperature ~ Cases
+
+```{r}
+linearMod <- lm(add_season_test$Avg.Temp ~ add_season_test$Case_Count_7Day_Avg, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+
+  + View Linear Model Coefficients
+```{r}
+summary(linearMod)$coefficients
+```
+
++ Improve Linear Model By using the Log incident case values
+
+```{r}
+# log cases
+add_season_test$log_cases <- log(add_season_test$Case_Count_7Day_Avg)
+for (i in 1:nrow(add_season_test)){
+  if(add_season_test$Case_Count_7Day_Avg[i]==0){
+    add_season_test$log_cases[i] = 0
+  }
+}
+```
+
++ Scatter plot of temp~ new log cases 
+```{r}
+## test log cases
+ggplot(data = add_season_test) +
+  geom_point(mapping = aes(x = Avg.Temp, 
+                           y = log_cases,
+                           color = season,
+                           shape = season)) +
+  labs(x="Humidity_index", 
+       y ="Log Number of COVID Cases",
+       title="Temperature VS Log COVID-19 Incidence",
+       subtitle = "Stratified by Season") +
+  theme_classic() +
+  geom_smooth(mapping = aes(x = Avg.Temp,
+                            y = log_cases),
+              method = "lm",
+              inherits.aes = F)
+```
+
+# Build Library
+```{r}
+devtools::has_devel()
+```
+
