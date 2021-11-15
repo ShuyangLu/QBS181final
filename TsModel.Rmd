@@ -18,18 +18,19 @@ library(TSA)
 nyc <- readRDS("data/nycnew.rds")
 covid <- read.csv("data/NYC_COVID_DATA/NYC_Covid_Data.csv")
 uv <- read.csv("data/uv_total.csv")
-
 rawdata <- ts(covid$all_case_count_7day_avg, start = c(2020,03,01), frequency = 365)
 weather <- ts(nyc, start = c(2020,03,01), frequency = 365)
 ultraviolet <- ts(uv$UV, start = c(2020,03,01), frequency = 365)
 ```
 
 ```{r}
+#Basic timeseries visulization and prepare for the model
 rawdata %>% ggtsdisplay()
 rawdata %>% diff() %>%ggtsdisplay()
 ```
 
 ```{r}
+#build best arima model and check the residuals
 fit <- auto.arima(rawdata, biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
 summary(fit)
 #fit <- arima(case_count, order = c(3,1,0))
@@ -37,6 +38,7 @@ checkresiduals(fit)
 ```
 
 ```{r}
+#Make prediction
 fit %>% forecast(h=20) %>% autoplot()
 ```
 
@@ -45,6 +47,7 @@ fit %>% forecast(h=20) %>% autoplot()
 temperature <- ts(nyc$Day.Average.Temp, start = c(2020,03,01),frequency = 365)
 humidity <- ts(nyc$Humidity, start = c(2020,03,01),frequency = 365)
 
+# temperature and humidity as outer variables for the models
 fit2 <- auto.arima(rawdata, xreg = cbind(humidity), biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
 
 summary(fit2)
@@ -52,6 +55,7 @@ checkresiduals(fit2)
 ```
 
 ```{r}
+# intro the ultraviolet as the variables
 fit3 <- auto.arima(rawdata, xreg = cbind(ultraviolet,temperature,humidity) , biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
 summary(fit3)
 ```
