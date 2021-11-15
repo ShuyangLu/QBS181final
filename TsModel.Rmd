@@ -1,0 +1,58 @@
+---
+title: "TsModel"
+author: "Chenhao Zhao"
+date: "11/10/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+library(timeSeries)
+library(forecast)
+library(tseries)
+library(TSA)
+nyc <- readRDS("data/nycnew.rds")
+covid <- read.csv("data/NYC_COVID_DATA/NYC_Covid_Data.csv")
+uv <- read.csv("data/uv_total.csv")
+
+rawdata <- ts(covid$all_case_count_7day_avg, start = c(2020,03,01), frequency = 365)
+weather <- ts(nyc, start = c(2020,03,01), frequency = 365)
+ultraviolet <- ts(uv$UV, start = c(2020,03,01), frequency = 365)
+```
+
+```{r}
+rawdata %>% ggtsdisplay()
+rawdata %>% diff() %>%ggtsdisplay()
+```
+
+```{r}
+fit <- auto.arima(rawdata, biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
+summary(fit)
+#fit <- arima(case_count, order = c(3,1,0))
+checkresiduals(fit)
+```
+
+```{r}
+fit %>% forecast(h=20) %>% autoplot()
+```
+
+
+```{r}
+temperature <- ts(nyc$Day.Average.Temp, start = c(2020,03,01),frequency = 365)
+humidity <- ts(nyc$Humidity, start = c(2020,03,01),frequency = 365)
+
+fit2 <- auto.arima(rawdata, xreg = cbind(humidity), biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
+
+summary(fit2)
+checkresiduals(fit2)
+```
+
+```{r}
+fit3 <- auto.arima(rawdata, xreg = cbind(ultraviolet,temperature,humidity) , biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
+summary(fit3)
+```
+
