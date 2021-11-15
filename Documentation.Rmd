@@ -28,10 +28,21 @@ library(knitr)
 
 \newpage
 
-```{r, fig.align='left', out.width="200%", out.height="150%", fig.cap="Highlighting the Keys to our Relational Database"}
-knitr::include_graphics(path = "QBS181_1.png")
+# Project Workflow
+
+### Right Side
+
+```{r, fig.align='left', out.width="112%", out.height="150%", fig.cap="QBS181 Final Project: WorkFlow (Part A)"}
+knitr::include_graphics(path = "images/QBS181_1.png")
 ```
 
+\newpage
+
+### Left Side
+
+```{r, fig.align='left', out.width="110%", out.height="150%", fig.cap="QBS181 Final Project: WorkFlow (Part B)"}
+knitr::include_graphics(path = "images/QBS181_2.png")
+```
 
 # **Data Acquisition**
 
@@ -49,7 +60,7 @@ knitr::include_graphics(path = "QBS181_1.png")
 ### 2. New York City Weather Data
 
 + Source:
-[Weather Underground - Weather Archive](https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA)
+[\textcolor{blue}{Weather Underground - Weather Archive}](https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA)
 
 + Acquisition Method
 
@@ -62,7 +73,7 @@ knitr::include_graphics(path = "QBS181_1.png")
 ### 3. Daily UV Index Scores - New York City
 
 + Source:
-[Central New York's Live Weather Source](http://www.cnyweather.com/wxuvdetail.php?r=wxuvdetail.php)
+[\textcolor{blue}{Central New York's Live Weather Source}](http://www.cnyweather.com/wxuvdetail.php?r=wxuvdetail.php)
 
 + Acquisition Method
 
@@ -96,6 +107,12 @@ knitr::include_graphics(path = "images/Relational_Schema.png")
 
 ### **1. New York City COVID-19 Data Archive**
 
+A. Read in the Covid-19 Date Frame
+
+```{r}
+covid_df <- read.csv("data/Raw Data/nyc_covid19_data/NYC_Covid_Data_raw.csv")
+```
+
 ### **2. New York City Weather Data**
 
 A. Read-in File from Raw Data File
@@ -119,25 +136,186 @@ weather.raw <- read.csv(file = "data/Raw Data/nyc_weather_raw.csv",
                         col.names = headers) 
 ```
 
-B. Remove the "City" Variable
+B. Format all observations of the "Date" Variable
+
++ Variable is of class "character" by default
+
+```{r}
+class(weather.raw$Date)
+```
+
++ Reclassify the variable as a "Date"
+
+```{r}
+weather.clean <- weather.raw %>%
+  mutate(Date = as.Date(Date, "%m/%d/%Y"))
+```
+
++ Outcome:
+```{r}
+class(weather.clean$Date)
+```
+
+C. Missing Data
+
++ Since we intend to do a time series, we need to identify any missing dates in the "date" column.
+
+  + We will do this using a \textcolor{red}{CUSTOM FUNCTION!}
+
+```{r}
+#Custom function to find the missing date in the date column
+find.missing.dates <- function(d) {
+  date_range <- seq(min(d), max(d), by = 1) 
+  date_range[!date_range %in% d] 
+}
+```
+
++ Use the custom function to identify missing dates in our NYC Weather df
+
+```{r}
+# Display the missing dates
+date.missing = c()
+date.missing<-find.missing.dates(weather.clean$Date)
+print(date.missing)
+```
+
+D. Replace Missing Values 
+
++ Method: Fill the missing data by averaging the former 6 days' data
+
+```{r}
+#Find the index of the day before "2020-11-08"
+weather.clean$Date<- as.character(weather.clean$Date)
+id.missing.date = which(weather.clean$Date == "2020-11-07")+1
+```
+
++ Build a \textcolor{red}{custom function} to fill the missing data
+
+  + Approach: use the average of the previous six days
+  
+```{r}
+# Custom function to fill the missing data by averaging the former 6 days' data
+fill.missing.values <- function(df,newrow.id){
+  newrow <- list()
+  value <- c()
+  first.row=newrow.id-6 
+  last.row=newrow.id-1
+  col.num=ncol(df)-2
+  for (i in 1:col.num){
+    subs<-weather.clean[first.row:last.row,i] # Create a new subset for each column
+    value<-mean(subs) # Calculate the mean
+    newrow<-append(newrow,value)
+  }
+  return(newrow)
+}
+```
+
++ Use the custom function to fill in the values of the missing row
+
+```{r}
+# Fill the missing values in the missing row
+missing.row <- fill.missing.values(weather.clean,id.missing.date)
+missing.row <-append(missing.row,"2020-11-08")
+missing.row <-append(missing.row,"new york city")
+```
+
++ Build another \textcolor{red}{custom function} to insert the row into the df
+```{r}
+# Custom function to insert the new row
+insertRow <- function(existingDF, newrow, r) {
+  existingDF[seq(r+1,nrow(existingDF)+1),] <- existingDF[seq(r,nrow(existingDF)),]
+  existingDF[r,] <- newrow
+  existingDF
+}
+```
+
++ Insert the imputed value into the df!
+
+```{r}
+# Insert the missing row and store it into a new df
+weather.clean <-insertRow(weather.clean,
+                             missing.row,
+                             id.missing.date)
+```
+
+E. Remove the "City" Variable
 
   + Every observation is is "new york city"
+  
+    + This variable is effectively just clutter.
 
-```{r, eval=FALSE}
-weather.clean <- weather.raw %>%
+```{r}
+weather.clean = weather.raw %>%
   select(-City)
 ```
 
-C. Display
+F. Display
 ```{r}
-y = weather.raw[1:5,]
-knitr::kable(x = y,digits = 2,align = "c")
+kable(x = weather.clean[1:5,],digits = 2,align = "c")
 ```
 
-D. Write the Processed Data to a new .csv file
+G. Write the Processed Data to a new .csv file
 ```{r, eval=FALSE}
 write.csv(x = weather.clean,
           file = "data/Processed Data/nyc_weather.csv")
 ```
 
+H. In Excel - Add a "Season" variable to the .csv generated in the prior section
+
++ Open File in Microsoft Excel
+
+  + \textcolor{red}{Summarise the process}
+  
++ Save the file as "nyc_clean_weather_add_season.csv"
+
+  + Push to Github
+
+I. Read in "nyc_clean_weather_add_season.csv" and reformat the "date" variable
+
++ Read in the file
+```{r}
+#vector with acceptable column names
+headers <- c("High.Temp", "Low.Temp", "Avg.Temp", "Precip",
+             "Dew.Point", "Humidity", "date", "City",
+             "Month", "Season")
+add_season_nyc_weather <- read.csv(file = "data/nyc_clean_weather_add_season.csv", 
+                                   header = T, 
+                                   col.names = headers) %>%
+  select(-City)
+```
+
++ Reformat the "date" variable
+```{r}
+# change date type from ymd to mdy
+add_season_nyc_weather$date <-format(as.Date(add_season_nyc_weather$date, '%Y/%m/%d'), "%m/%d/%Y")
+```
+
+J. Display
+
+```{r}
+knitr::kable(x = add_season_nyc_weather[1:5,],align = "c")
+```
+
 ### **3. Daily UV Index Scores - New York City**
+
+A. Read in the csv file that we built in excel
+
+```{r}
+nyc.uv = read.csv(file = "data/Raw Data/nyc_uv_raw.csv", header = T)
+```
+
+B. Remove the "City" Variable
+
++ Every observation is "New York City" so this variable is effectively clutter. 
+
+```{r}
+nyc.uv <- nyc.uv %>%
+  select(-City)
+```
+
+C. Display
+
+```{r}
+knitr::kable(x = nyc.uv[1:5,], align = "c")
+```
+
