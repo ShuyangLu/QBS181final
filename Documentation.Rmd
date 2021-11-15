@@ -24,6 +24,12 @@ library(kableExtra)
 library(readr)
 library(gridExtra)
 library(knitr)
+library(devtools)
+library(usethis)
+library(roxygen2)
+library(testthat)
+library(devtools)
+library(rmarkdown)
 ```
 
 \newpage
@@ -368,6 +374,11 @@ ggplot(data = add_season_test) +
        subtitle = "Stratified by Season") +
   theme_bw() + 
   geom_smooth(mapping = aes(x = Avg.Temp,
+                            y = Case_Count_7Day_Avg),
+              method = "lm",
+              inherits.aes = F)
+```
+  geom_smooth(mapping = aes(x = Avg.Temp,
                            y = Case_Count_7Day_Avg))
 ```
 
@@ -437,3 +448,9 @@ ggplot(data = add_season_test) +
               method = "lm",
               inherits.aes = F)
 ```
+
+# Build Library
+```{r}
+devtools::has_devel()
+```
+
