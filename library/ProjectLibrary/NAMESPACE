@@ -3,3 +3,4 @@
 export(fill.missing.values)
 export(find.missing.dates)
 export(insertRow)
+export(numMonth)
