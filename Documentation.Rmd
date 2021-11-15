@@ -378,9 +378,6 @@ ggplot(data = add_season_test) +
               method = "lm",
               inherits.aes = F)
 ```
-  geom_smooth(mapping = aes(x = Avg.Temp,
-                           y = Case_Count_7Day_Avg))
-```
 
 + Boxplot
 
@@ -450,7 +447,5 @@ ggplot(data = add_season_test) +
 ```
 
 # Build Library
-```{r}
-devtools::has_devel()
-```
+
 
