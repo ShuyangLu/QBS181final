@@ -277,7 +277,7 @@ I. Read in "nyc_clean_weather_add_season.csv" and reformat the "date" variable
 #vector with acceptable column names
 headers <- c("High.Temp", "Low.Temp", "Avg.Temp", "Precip",
              "Dew.Point", "Humidity", "date", "City",
-             "Month", "Season")
+             "Month", "season")
 add_season_nyc_weather <- read.csv(file = "data/nyc_clean_weather_add_season.csv", 
                                    header = T, 
                                    col.names = headers) %>%
@@ -319,3 +319,121 @@ C. Display
 knitr::kable(x = nyc.uv[1:5,], align = "c")
 ```
 
+# Data Wrangling and Objectives
+
+### 1. Is there a Difference in Number of Cases Observed in the Summer vs in the Winter?
+
+A. Add the "CASE_COUNT_7DAY_AVG" variable from the covid df to the add_season_nyc_weather df
+
++ Visual Aid
+
+```{r, fig.align='center', out.width="100%", out.height="100%", fig.cap="CASE_COUNT_7DAY_AVG variable from the covid df to the add_season_nyc_weather df"}
+knitr::include_graphics(path = "images/weather_and_7day_avg.png")
+```
+
++ Combine
+```{r}
+add_season_test <- add_season_nyc_weather
+rownames(covid_df) <- covid_df$DATE_OF_INTEREST
+add_season_test$Case_Count_7Day_Avg <- covid_df[,"CASE_COUNT_7DAY_AVG"]
+```
+
+B. Create a df with ONLY the summer and winter observations
+
+```{r}
+sum_win <- add_season_test %>%
+  filter(season == "summer" | season == "winter")
+```
+
+C. Run a Wilcox Test to test the difference in incidence (summer vs winter)
+
+```{r}
+wilcox.test(sum_win[which(sum_win$season=="summer"),]$Case_Count_7Day_Avg,sum_win[which(sum_win$season=="winter"),]$Case_Count_7Day_Avg)
+```
+
++ We can reject the null hypothesis that there is no difference in incidence.
+
+### Is there an Association between temperature and Incidence?
+
++ Scatter Plot
+```{r}
+ggplot(data = add_season_test) +
+  geom_point(mapping = aes(x = Avg.Temp,
+                           y = Case_Count_7Day_Avg,
+                           color = season)
+             ) +
+  labs(x = "Daily Average Temperature",
+       y = "Case Count (7-Day Average)",
+       title = "Temperature vs Incidence of COVID-19",
+       subtitle = "Stratified by Season") +
+  theme_bw() + 
+  geom_smooth(mapping = aes(x = Avg.Temp,
+                           y = Case_Count_7Day_Avg))
+```
+
++ Boxplot
+
+```{r}
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(add_season_test$Avg.Temp,main="Temperature")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+```
+
++ Bar Graph
+
+```{r}
+ggplot(data = add_season_test) +
+  geom_col(mapping = aes(x = Avg.Temp,
+                         y = Case_Count_7Day_Avg,
+                         fill = season),
+           width = 1.5)
+```
+
++ Correlation between Temperature and Case Count
+
+```{r}
+cor(add_season_test$Avg.Temp, add_season_test$Case_Count_7Day_Avg)
+```
+
++ Single Variable Linear Regression Model Temperature ~ Cases
+
+```{r}
+linearMod <- lm(add_season_test$Avg.Temp ~ add_season_test$Case_Count_7Day_Avg, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+
+  + View Linear Model Coefficients
+```{r}
+summary(linearMod)$coefficients
+```
+
++ Improve Linear Model By using the Log incident case values
+
+```{r}
+# log cases
+add_season_test$log_cases <- log(add_season_test$Case_Count_7Day_Avg)
+for (i in 1:nrow(add_season_test)){
+  if(add_season_test$Case_Count_7Day_Avg[i]==0){
+    add_season_test$log_cases[i] = 0
+  }
+}
+```
+
++ Scatter plot of temp~ new log cases 
+```{r}
+## test log cases
+ggplot(data = add_season_test) +
+  geom_point(mapping = aes(x = Avg.Temp, 
+                           y = log_cases,
+                           color = season,
+                           shape = season)) +
+  labs(x="Humidity_index", 
+       y ="Log Number of COVID Cases",
+       title="Temperature VS Log COVID-19 Incidence",
+       subtitle = "Stratified by Season") +
+  theme_classic() +
+  geom_smooth(mapping = aes(x = Avg.Temp,
+                            y = log_cases),
+              method = "lm",
+              inherits.aes = F)
+```
