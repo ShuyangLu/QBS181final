@@ -86,6 +86,17 @@ winter_data <- add_season_test %>%
 # create summer and winter data
 sum_win <- rbind(summer_data,winter_data)
 ```
+# Make a bar chart between season data and covid cases
+```{r}
+# Create a new dataframe to include the variables needed in the plot
+season.covid <- data.frame(season=sum_win$season,covid_cases=sum_win$Case_Count_7Day_Avg)
+# Make a bar chart between season categorical data and covid cases
+ggplot(season.covid, aes(x = season, y = covid_cases, fill=season)) +
+  geom_bar(stat="summary", fun="mean")+
+  labs(title="Seasons VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="Seasons")+
+  scale_fill_brewer(name = "Seasons",palette="Blues")+
+  theme_minimal()
+```
 ## wilcox
 ```{r}
 wilcox.test(sum_win[which(sum_win$season=="summer"),]$Case_Count_7Day_Avg,sum_win[which(sum_win$season=="winter"),]$Case_Count_7Day_Avg)
@@ -93,7 +104,20 @@ wilcox.test(sum_win[which(sum_win$season=="summer"),]$Case_Count_7Day_Avg,sum_wi
 # Temperature VS Cases
 ## scatter plot
 ```{r}
-scatter.smooth(x=add_season_test$Day.Average.Temp, y=add_season_test$Case_Count_7Day_Avg, main="Temperature ~ Number of COVID Scatter Plot",xlab="Temperature",ylab ="Number of COVID cases")
+ggplot(data = add_season_test) +
+  geom_point(mapping = aes(x = Day.Average.Temp,
+                           y = Case_Count_7Day_Avg,
+                           color = season)
+             ) +
+  labs(x = "Daily Average Temperature",
+       y = "Case Count (7-Day Average)",
+       title = "Temperature vs Incidence of COVID-19",
+       subtitle = "Stratified by Season") +
+  theme_bw() + 
+  geom_smooth(mapping = aes(x = Day.Average.Temp,
+                            y = Case_Count_7Day_Avg),
+              method = "lm",
+              inherits.aes = F)
 ```
 
 ## boxplot
@@ -131,7 +155,20 @@ for (i in 1:nrow(add_season_test)){
 ## scatter plot of temp~ new log cases 
 ```{r}
 ## test log cases
-scatter.smooth(x=add_season_test$Day.Average.Temp, y=add_season_test$log_cases, main="Temperature ~ Number of COVID Scatter Plot",xlab="Humidity_index",ylab ="Number of COVID cases")
+ggplot(data = add_season_test) +
+  geom_point(mapping = aes(x = Day.Average.Temp,
+                           y = log_cases,
+                           color = season)
+             ) +
+  labs(x = "Daily Average Temperature",
+       y = "log COVID cases",
+       title = "Temperature vs Incidence of COVID-19",
+       subtitle = "Stratified by Season") +
+  theme_bw() + 
+  geom_smooth(mapping = aes(x = Day.Average.Temp,
+                            y = log_cases),
+              method = "lm",
+              inherits.aes = F)
 ```
 ## linear model of temp~ new log cases
 ```{r}
@@ -184,7 +221,9 @@ count(add_season_test[is.na(add_season_test$humidity_index),])
 ## scatter plot of humidity and cases
 ```{r}
 # scatter plot of  humidity index
-scatter.smooth(x=add_season_test$humidity_index, y=add_season_test$Case_Count_7Day_Avg, main="HumidityIndex ~ Number of COVID Scatter Plot",xlab="Humidity_index",ylab ="Number of COVID cases")
+ggplot(add_season_test,aes(x=`humidity_index`,y=`Case_Count_7Day_Avg`,color=season,shape=season))+
+  geom_point()+ #this controls the scatter plots
+  labs(x="Humidity_index", y ="Number of COVID cases",title="HumidityIndex ~ Number of COVID Scatter Plot")+theme_classic()+geom_smooth(aes(x=`humidity_index`,y=`Case_Count_7Day_Avg`),method="lm",inherit.aes=F)
 ```
 ## boxplot humidity~ cases
 ```{r}
@@ -213,7 +252,10 @@ summary(linearMod)$coefficients
 ## scatter plot of humidity ~ log cases
 ```{r}
 # scatter plot of  humidity index
-scatter.smooth(x=add_season_test$humidity_index, y=add_season_test$log_cases, main="HumidityIndex ~ Number of COVID Scatter Plot",xlab="Humidity_index",ylab ="Number of COVID cases")
+ggplot(add_season_test,aes(x=`humidity_index`,y=`log_cases`,color=season,shape=season))+
+  geom_point()+ #this controls the scatter plots
+  labs(x="Humidity_index",y="Number of COVID cases")+
+  theme_classic()+geom_smooth(aes(x=`humidity_index`,y=`log_cases`),method="lm",inherit.aes=F)
 ```
 ## boxplot humidity ~ log cases
 ```{r}
@@ -274,9 +316,24 @@ summary(total_df)
 ```
 
 # UV VS Cases
+# Make a bar chart between uv categorical data and covid cases
+```{r}
+# Create a new dataframe to include the variables needed in the plot
+uv.levels.covid <- data.frame(uv_levels=total_df$levels,covid_cases=total_df$Case_Count_7Day_Avg)
+# Sort the uv_levels from low to high
+uv.levels.covid$uv_levels <- factor(uv.levels.covid$uv_levels,levels = c("low", "moderate", "high")) 
+# Make a bar chart between uv categorical data and covid cases
+ggplot(uv.levels.covid, aes(x = uv_levels, y = covid_cases, fill=uv_levels)) +
+  geom_bar(stat="summary", fun="mean")+
+  labs(title="UV Levels VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="UV Levels")+
+  scale_fill_brewer(name = "UV Levels",palette="Oranges")+
+  theme_minimal()
+```
 ## scatter plot
 ```{r}
-scatter.smooth(x=total_df$UV, y=total_df$Case_Count_7Day_Avg, main="UV ~ Number of COVID Scatter Plot",xlab="UV",ylab ="Number of COVID cases")
+ggplot(total_df,aes(x=`UV`,y=`Case_Count_7Day_Avg`,color=season,shape=season))+
+  geom_point()+ #this controls the scatter plots
+  labs(x="UV", y ="Number of COVID cases",title="UV ~ Number of COVID Scatter Plot")+theme_classic()+geom_smooth(aes(x=`UV`,y=`Case_Count_7Day_Avg`),method="lm",inherit.aes=F)
 ``` 
 
 ## boxplot
@@ -305,7 +362,9 @@ summary(linearMod)$coefficients
 # improve UV~cases to become UV~log cases
 ## scatter plot
 ```{r}
-scatter.smooth(x=total_df$UV, y=total_df$log_cases, main="UV ~ log cases",xlab="UV",ylab ="log cases")
+ggplot(total_df,aes(x=`UV`,y=`log_cases`,color=levels,shape=levels))+
+  geom_point()+ #this controls the scatter plots
+  labs(x="UV", y ="log_cases",title="UV ~ log cases Scatter Plot")+theme_classic()+geom_smooth(aes(x=`UV`,y=`log_cases`),method="lm",inherit.aes=F)
 ``` 
 ## boxplot
 ```{r}
@@ -327,28 +386,6 @@ print(linearMod)
 summary(linearMod)$coefficients
 ```
 
-# Make a bar chart between uv categorical data and covid cases
-```{r}
-# Create a new dataframe to include the variables needed in the plot
-uv.levels.covid <- data.frame(uv_levels=total_df$levels,covid_cases=total_df$Case_Count_7Day_Avg)
-# Sort the uv_levels from low to high
-uv.levels.covid$uv_levels <- factor(uv.levels.covid$uv_levels,levels = c("low", "moderate", "high")) 
-# Make a bar chart between uv categorical data and covid cases
-ggplot(uv.levels.covid, aes(x = uv_levels, y = covid_cases, fill=uv_levels)) +
-  geom_bar(stat="summary", fun="mean")+
-  labs(title="UV Levels VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="UV Levels")+
-  scale_fill_brewer(name = "UV Levels",palette="Oranges")+
-  theme_minimal()
-```
 
-# Make a bar chart between season data and covid cases
-```{r}
-# Create a new dataframe to include the variables needed in the plot
-season.covid <- data.frame(season=sum_win$season,covid_cases=sum_win$Case_Count_7Day_Avg)
-# Make a bar chart between season categorical data and covid cases
-ggplot(season.covid, aes(x = season, y = covid_cases, fill=season)) +
-  geom_bar(stat="summary", fun="mean")+
-  labs(title="Seasons VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="Seasons")+
-  scale_fill_brewer(name = "Seasons",palette="Blues")+
-  theme_minimal()
-```
+
+
