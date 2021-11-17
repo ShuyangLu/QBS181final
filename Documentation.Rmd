@@ -30,13 +30,26 @@ library(roxygen2)
 library(testthat)
 library(devtools)
 library(rmarkdown)
+library(PerformanceAnalytics)
+library(lubridate)
+library(reshape2)
+library(timeSeries)
+library(forecast)
+library(tseries)
+library(TSA)
+```
+
+```{r, eval=FALSE}
+library(gsubfn)
+library(proto)
+#library(sqldf)
 ```
 
 \newpage
 
-# Project Workflow
+# **Project Workflow**
 
-### Right Side
+### Right Side of the Schema 
 
 ```{r, fig.align='left', out.width="112%", out.height="150%", fig.cap="QBS181 Final Project: WorkFlow (Part A)"}
 knitr::include_graphics(path = "images/QBS181_1.png")
@@ -44,15 +57,17 @@ knitr::include_graphics(path = "images/QBS181_1.png")
 
 \newpage
 
-### Left Side
+### Left Side of the Schema
 
 ```{r, fig.align='left', out.width="110%", out.height="150%", fig.cap="QBS181 Final Project: WorkFlow (Part B)"}
 knitr::include_graphics(path = "images/QBS181_2.png")
 ```
 
+\newpage
+
 # **Data Acquisition**
 
-### 1. New York City COVID-19 Data Archive
+## 1. New York City COVID-19 Data Archive
 
 + Source: [\textcolor{blue}{NYC OpenData}](https://data.cityofnewyork.us/Health/COVID-19-Daily-Counts-of-Cases-Hospitalizations-an/rc75-m7u3)
 
@@ -63,7 +78,7 @@ knitr::include_graphics(path = "images/QBS181_2.png")
 
   + We will use this time series data to track changes in the incidence of COVID-19.
 
-### 2. New York City Weather Data
+## 2. New York City Weather Data
 
 + Source:
 [\textcolor{blue}{Weather Underground - Weather Archive}](https://www.wunderground.com/history/daily/us/ny/new-york-city/KLGA)
@@ -76,7 +91,7 @@ knitr::include_graphics(path = "images/QBS181_2.png")
 
   + Merge time series weather data with timeseries Covid-19 data and investigate potential associations
   
-### 3. Daily UV Index Scores - New York City
+## 3. Daily UV Index Scores - New York City
 
 + Source:
 [\textcolor{blue}{Central New York's Live Weather Source}](http://www.cnyweather.com/wxuvdetail.php?r=wxuvdetail.php)
@@ -101,7 +116,7 @@ knitr::include_graphics(path = "images/QBS181_2.png")
 
 \newpage
 
-# Relational Schema
+# **Relational Schema**
 
 ```{r, fig.align='center', out.width="100%", out.height="100%", fig.cap="Highlighting the Keys to our Relational Database"}
 knitr::include_graphics(path = "images/Relational_Schema.png")
@@ -109,19 +124,19 @@ knitr::include_graphics(path = "images/Relational_Schema.png")
 
 \newpage
 
-# Data Cleaning
+# **Data Cleaning**
 
-### **1. New York City COVID-19 Data Archive**
+## 1. New York City COVID-19 Data Archive
 
-A. Read in the Covid-19 Date Frame
++ Step 1: Read in the Covid-19 Date Frame
 
 ```{r}
 covid_df <- read.csv("data/Raw Data/nyc_covid19_data/NYC_Covid_Data_raw.csv")
 ```
 
-### **2. New York City Weather Data**
+## 2. New York City Weather Data
 
-A. Read-in File from Raw Data File
++ Step 1: Read-in File from Raw Data File
 
   + The raw file has an issue with the column headers.
   
@@ -142,31 +157,32 @@ weather.raw <- read.csv(file = "data/Raw Data/nyc_weather_raw.csv",
                         col.names = headers) 
 ```
 
-B. Format all observations of the "Date" Variable
++ Step 2: Format all observations of the "Date" Variable
 
-+ Variable is of class "character" by default
+  + Variable is of class "character" by default
 
 ```{r}
 class(weather.raw$Date)
 ```
 
-+ Reclassify the variable as a "Date"
+  + Reclassify the variable as a "Date"
 
 ```{r}
 weather.clean <- weather.raw %>%
   mutate(Date = as.Date(Date, "%m/%d/%Y"))
 ```
 
-+ Outcome:
+  + Outcome:
+  
 ```{r}
 class(weather.clean$Date)
 ```
 
-C. Missing Data
++ Step 3: Missing Data
 
-+ Since we intend to do a time series, we need to identify any missing dates in the "date" column.
+  + Since we intend to do a time series, we need to identify any missing dates in the "date" column.
 
-  + We will do this using a \textcolor{red}{CUSTOM FUNCTION!}
+    + We will do this using a \textcolor{red}{CUSTOM FUNCTION!}
 
 ```{r}
 #Custom function to find the missing date in the date column
@@ -176,7 +192,7 @@ find.missing.dates <- function(d) {
 }
 ```
 
-+ Use the custom function to identify missing dates in our NYC Weather df
+  + Use the \textcolor{red}{custom function} to identify missing dates in our NYC Weather df.
 
 ```{r}
 # Display the missing dates
@@ -185,9 +201,9 @@ date.missing<-find.missing.dates(weather.clean$Date)
 print(date.missing)
 ```
 
-D. Replace Missing Values 
++ Step 4: Replace Missing Values 
 
-+ Method: Fill the missing data by averaging the former 6 days' data
+  + Method: Fill the missing data by averaging the former 6 days' data
 
 ```{r}
 #Find the index of the day before "2020-11-08"
@@ -195,9 +211,9 @@ weather.clean$Date<- as.character(weather.clean$Date)
 id.missing.date = which(weather.clean$Date == "2020-11-07")+1
 ```
 
-+ Build a \textcolor{red}{custom function} to fill the missing data
+  + Build a \textcolor{red}{custom function} to fill the missing data
 
-  + Approach: use the average of the previous six days
+    + Approach: use the average of the previous six days
   
 ```{r}
 # Custom function to fill the missing data by averaging the former 6 days' data
@@ -216,7 +232,7 @@ fill.missing.values <- function(df,newrow.id){
 }
 ```
 
-+ Use the custom function to fill in the values of the missing row
+  + Use the \textcolor{red}{custom function} to fill in the values of the missing row
 
 ```{r}
 # Fill the missing values in the missing row
@@ -225,7 +241,7 @@ missing.row <-append(missing.row,"2020-11-08")
 missing.row <-append(missing.row,"new york city")
 ```
 
-+ Build another \textcolor{red}{custom function} to insert the row into the df
+  + Build another \textcolor{red}{custom function} to insert the row into the df
 ```{r}
 # Custom function to insert the new row
 insertRow <- function(existingDF, newrow, r) {
@@ -235,7 +251,7 @@ insertRow <- function(existingDF, newrow, r) {
 }
 ```
 
-+ Insert the imputed value into the df!
+  + Insert the imputed value into the df!
 
 ```{r}
 # Insert the missing row and store it into a new df
@@ -244,7 +260,7 @@ weather.clean <-insertRow(weather.clean,
                              id.missing.date)
 ```
 
-E. Remove the "City" Variable
++ Step 4: Remove the "City" Variable
 
   + Every observation is is "new york city"
   
@@ -255,30 +271,32 @@ weather.clean = weather.raw %>%
   select(-City)
 ```
 
-F. Display
++ Step 5: Display
 ```{r}
 kable(x = weather.clean[1:5,],digits = 2,align = "c")
 ```
 
-G. Write the Processed Data to a new .csv file
++ Step 6: Write the Processed Data to a new .csv file
+
 ```{r, eval=FALSE}
 write.csv(x = weather.clean,
           file = "data/Processed Data/nyc_weather.csv")
 ```
 
-H. In Excel - Add a "Season" variable to the .csv generated in the prior section
++ Step 7: In Excel - Add a "Season" variable to the .csv generated in the prior section
 
-+ Open File in Microsoft Excel
+  + Open File in Microsoft Excel
 
-  + \textcolor{red}{Summarise the process}
+    + \textcolor{red}{Summarise the process}
   
-+ Save the file as "nyc_clean_weather_add_season.csv"
+  + Save the file as "nyc_clean_weather_add_season.csv"
 
   + Push to Github
 
-I. Read in "nyc_clean_weather_add_season.csv" and reformat the "date" variable
++ Step 8: Read in "nyc_clean_weather_add_season.csv" and reformat the "date" variable
 
-+ Read in the file
+  + Read in the file
+  
 ```{r}
 #vector with acceptable column names
 headers <- c("High.Temp", "Low.Temp", "Avg.Temp", "Precip",
@@ -290,78 +308,190 @@ add_season_nyc_weather <- read.csv(file = "data/nyc_clean_weather_add_season.csv
   select(-City)
 ```
 
-+ Reformat the "date" variable
+  + Reformat the "date" variable
+  
 ```{r}
 # change date type from ymd to mdy
 add_season_nyc_weather$date <-format(as.Date(add_season_nyc_weather$date, '%Y/%m/%d'), "%m/%d/%Y")
 ```
 
-J. Display
++ Step 9: Display
 
 ```{r}
 knitr::kable(x = add_season_nyc_weather[1:5,],align = "c")
 ```
 
-### **3. Daily UV Index Scores - New York City**
+## 3. Daily UV Index Scores - New York City
 
-A. Read in the csv file that we built in excel
++ Step 1: Read the 2020 csv file
 
-```{r}
-nyc.uv = read.csv(file = "data/Raw Data/nyc_uv_raw.csv", header = T)
+  + Read the csv file from the website we collected of year 2020 ultraviolet rays as "uv" for each day in a year.
+  
+```{r }
+#read the csv
+uv_2020 <- read.csv("data/2020uv.csv")
 ```
 
-B. Remove the "City" Variable
-
-+ Every observation is "New York City" so this variable is effectively clutter. 
++ Step 2: Use the "reshape2" library to melt the data we collect to 3 columns which is day, month, uv
 
 ```{r}
-nyc.uv <- nyc.uv %>%
-  select(-City)
+# wide-format change
+new_2020uv <- as.data.frame(melt(uv_2020,id.vars=c("Day")))
+
+#change column names
+colnames(new_2020uv)[2] <- "Month"
+colnames(new_2020uv)[3] <- "UV"
 ```
 
-C. Display
++ Step 3: Do the missing data correction, because Feburary only has 28 days, we need get rid of the "NA" in those certain dates.
 
 ```{r}
-knitr::kable(x = nyc.uv[1:5,], align = "c")
+# delete February
+test_2020 <- new_2020uv %>%
+  dplyr::filter(!is.na(UV))
+
+# add year column
+
+test_2020 <- mutate(test_2020, Year = 2020)
 ```
 
-# Data Wrangling and Objectives
++ Step 4: # Use the function to convert month to number and then merge the day, month, year together to generate a new column date.
 
-### 1. Is there a Difference in Number of Cases Observed in the Summer vs in the Winter?
+```{r}
+#function to change month to number
+numMonth <- function(x) {
+    months <- list(jan=1,feb=2,mar=3,apr=4,may=5,jun=6,jul=7,aug=8,sep=9,oct=10,nov=11,dec=12)
+    x <- tolower(x)
+    sapply(x,function(x) months[[x]])
+}
+#new column numeric month
+test_2020$Month_change=numMonth(test_2020$Month)
+#past day-month-year together
+test_2020$date = paste(test_2020$Month_change,test_2020$Day,test_2020$Year,sep = '/')
 
-A. Add the "CASE_COUNT_7DAY_AVG" variable from the covid df to the add_season_nyc_weather df
+```
 
-+ Visual Aid
++ Step 5: Use the "lubridate" library to make the date to date that can be recognized by R
+
+```{r}
+#make the 2020 date as order we want 
+test_2020$new_date=mdy(test_2020$date)
+```
+
++ Step 6: Import 2021 csv file 
+
+```{r}
+# import 2021 UV data
+uv_2021 <- read.csv("data/2021uv.csv")
+```
+
++ Step 7: Use the reshape2 library to melt the data we collect to 3 columns which is day, month, uv
+
+```{r}
+#change the first column name
+colnames(uv_2021)[1]="Day"
+# wide-format change
+new_2021uv <- as.data.frame(melt(uv_2021,id.vars=c("Day")))
+#change column names
+colnames(new_2021uv)[2] <- "Month"
+colnames(new_2021uv)[3] <- "UV"
+```
+
++ Step 8: Do the missing data correction, because Februrary only has 28 days, we need get rid of the "NA" in those certain dates.
+
+```{r}
+# delete February 
+test_2021 <- new_2021uv %>%
+  dplyr::filter(!is.na(UV))
+
+# add year new column
+test_2021 <- mutate(test_2021, Year = 2021)
+```
+
++ Step 9: Use the function to convert month to number and then merge the day, month, year together to generate a new column date.
+
+```{r}
+#new column numeric month
+test_2021$Month_change=numMonth(test_2021$Month)
+#past day-month-year together
+test_2021$date = paste(test_2021$Month_change,test_2021$Day,test_2021$Year,sep = '/')
+```
+
+```{r}
+#make the date accessible
+test_2021$new_date=mdy(test_2021$date)
+#fail reason for 11/31/2021: no UV data
+```
+
++ Step 10: Bind the data from 2020 and the data from 2021
+
+```{r}
+#r bind the two year together
+uv_df=rbind(test_2020,test_2021)
+```
+
++ Step 11: Add the city name for each of the date and related UV
+
+```{r}
+#select the columns we need
+uv_final=select(uv_df,new_date, UV)
+#add a new column for city name
+uv_final <- mutate(uv_final, City = "New York")
+```
+
++ Step 12: Filter the period of time period we needed for our project.
+```{r}
+#take out the period we want from 2020-03-01 to 2021-10-31
+uv_final$new_date = as.Date(uv_final$new_date, format= "%Y-%m-%d")
+uv_select=subset(uv_final, new_date> "2020-02-29" & new_date < "2021-11-01")
+```
+
++ Step 13: Preview the Data Frame.
+```{r}
+uv_final.display <- uv_final[1:5,]
+knitr::kable(uv_final.display)
+```
+
+# **AIM 1**
+
+## 1. Is there a Difference in Number of Cases Observed in the Summer vs in the Winter?
+
++ Step 1: Add the "CASE_COUNT_7DAY_AVG" variable from the covid df to the add_season_nyc_weather df
+
+  + Visual Aid
 
 ```{r, fig.align='center', out.width="100%", out.height="100%", fig.cap="CASE_COUNT_7DAY_AVG variable from the covid df to the add_season_nyc_weather df"}
 knitr::include_graphics(path = "images/weather_and_7day_avg.png")
 ```
 
-+ Combine
+  + Code
 ```{r}
 add_season_test <- add_season_nyc_weather
 rownames(covid_df) <- covid_df$DATE_OF_INTEREST
 add_season_test$Case_Count_7Day_Avg <- covid_df[,"CASE_COUNT_7DAY_AVG"]
 ```
 
-B. Create a df with ONLY the summer and winter observations
++ Step 2: Create a df with ONLY the summer and winter observations
 
+  + Code
 ```{r}
 sum_win <- add_season_test %>%
-  filter(season == "summer" | season == "winter")
+  dplyr::filter(season == "summer" | season == "winter")
 ```
 
-C. Run a Wilcox Test to test the difference in incidence (summer vs winter)
++ Step 3: Run a Wilcox Test to test the difference in COVID incidence (summer vs winter)
 
+  + Code
 ```{r}
 wilcox.test(sum_win[which(sum_win$season=="summer"),]$Case_Count_7Day_Avg,sum_win[which(sum_win$season=="winter"),]$Case_Count_7Day_Avg)
 ```
 
-+ We can reject the null hypothesis that there is no difference in incidence.
+  + We can reject the null hypothesis that there is no difference in incidence.
 
-### Is there an Association between temperature and Incidence?
+## 2. Is there an Association between temperature and Incidence?
 
-+ Scatter Plot
++ Step 1: Generate a Scatter Plot
+
 ```{r}
 ggplot(data = add_season_test) +
   geom_point(mapping = aes(x = Avg.Temp,
@@ -379,7 +509,7 @@ ggplot(data = add_season_test) +
               inherits.aes = F)
 ```
 
-+ Boxplot
++ Step 2: Generate a Boxplot
 
 ```{r}
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
@@ -387,7 +517,7 @@ boxplot(add_season_test$Avg.Temp,main="Temperature")
 boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
 ```
 
-+ Bar Graph
++ Step 3: Generate a Bar Graph
 
 ```{r}
 ggplot(data = add_season_test) +
@@ -397,25 +527,28 @@ ggplot(data = add_season_test) +
            width = 1.5)
 ```
 
-+ Correlation between Temperature and Case Count
++ Step 4: Compute the Correlation between Temperature and Case Count
 
 ```{r}
 cor(add_season_test$Avg.Temp, add_season_test$Case_Count_7Day_Avg)
 ```
 
-+ Single Variable Linear Regression Model Temperature ~ Cases
++ Step 5: Generate a Single Variable Linear Regression Model
+
+  +Temperature ~ Cases
 
 ```{r}
 linearMod <- lm(add_season_test$Avg.Temp ~ add_season_test$Case_Count_7Day_Avg, data=add_season_test)  # build linear regression model on full data
 print(linearMod)
 ```
 
-  + View Linear Model Coefficients
++ Step 6: View Linear Model Coefficients
+
 ```{r}
 summary(linearMod)$coefficients
 ```
 
-+ Improve Linear Model By using the Log incident case values
++ Step 7: Improve Linear Model By using the Log incident case values
 
 ```{r}
 # log cases
@@ -427,7 +560,10 @@ for (i in 1:nrow(add_season_test)){
 }
 ```
 
-+ Scatter plot of temp~ new log cases 
++ Generate a Scatter Plot Using
+
+  + Temperature vs Log cases 
+
 ```{r}
 ## test log cases
 ggplot(data = add_season_test) +
@@ -446,9 +582,393 @@ ggplot(data = add_season_test) +
               inherits.aes = F)
 ```
 
-# Build Library
++ Step 7: Generate a Single Variable Linear Regression Model
+
+  + Temperature Vs Log Cases
+  
 ```{r}
-help(package = "ProjectLibrary")
+# linear model of humidity_index
+linearMod <- lm(add_season_test$Avg.Temp ~ add_season_test$log_cases, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+
++ Step 8: View Coefficients for Linear Model (P-Value)
+
+  + Temp vs New Log Cases
+  
+```{r}
+# coefficients test
+summary(linearMod)$coefficients
+```
+
+## 3. Is there an Association between Humidity Index and Cases?
+
++ Step 1: Generate a Correlation Chart.
+
+```{r}
+humidity_subset=add_season_test[,c(4,5,6)]
+chart.Correlation(humidity_subset,histogram=TRUE,pch=19)
+```
+
++ Step 2: Generate a "Humidity Index" variable
+
+  + We use the following formula:
+  
+    + $Humidity\ Index =\ 0.01\ \times(Precipitation\ + Dew\ Point +\ Humidity)$
+    
+```{r}
+# create humidity index column
+add_season_test$humidity_index <- add_season_test$Precip+add_season_test$Dew.Point+add_season_test$Humidity*0.01
+# because humidity is a percentage, so we use humidity*0.01
+```
+
++ Step 3: Find missing observations of the humidity variable
+
+```{r}
+# finding missing value
+na_humidity <- c(which(is.na(add_season_test$humidity_index)))
+na_humidity
+```
+
++ Step 4: Impute the missing values
+
+  + Imputation Formula:
+  
+    + Missing Value = Mean of the previous two observations
+
+```{r}
+# fill the missing value-- 2 days mean
+for (i in na_humidity){
+  add_season_test$Humidity[i] <- mean(add_season_test$Humidity[(i-2):(i-1)],2)
+}
+```
+
++ Step 5: Fill in the imputed values at their corresponding positions 
+
+```{r}
+# refill the humidity index again after fill the missing value
+add_season_test$humidity_index <- add_season_test$Precip+add_season_test$Dew.Point+add_season_test$Humidity*0.01
+```
+
++ Step 6: Confirm that there are no more missing observations
+
+```{r}
+# check whether has missing value this time
+count(add_season_test[is.na(add_season_test$humidity_index),])
+```
+
++ Step 7: Generate a Scatter Plot
+
+  + Humidity vs Cases
+  
+```{r}
+# scatter plot of  humidity index
+
+ggplot(data = add_season_test) +
+  geom_point(mapping = aes(x = humidity_index,
+                           y = Case_Count_7Day_Avg,
+                           color = season,
+                           shape = season)) +
+  labs(x="Humidity Index", 
+       y ="Number of COVID Cases",
+       title="HumidityIndex vs Number of COVID Cases",
+       subtitle = "Stratifies by Season") +
+  theme_classic() +
+  geom_smooth(mapping = aes(x=humidity_index,
+                            y=Case_Count_7Day_Avg),
+              method="lm",
+              inherit.aes=F)
+```
+
++ Step 8: Generate a Boxplot
+
+  + Humidity vs Cases
+  
+```{r}
+# boxplot
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(add_season_test$humidity_index,main="Humidity_Index")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+```
+
++ Step 9: Compute the Correlation Coefficient
+
+```{r}
+# correlation
+cor(add_season_test$humidity_index, add_season_test$Case_Count_7Day_Avg)
+```
+
++ Step 10: Generate a Single Variable Linear Model 
+
+  + Humidity vs Cases
+  
+```{r}
+# linear model of humidity_index
+linearMod <- lm(add_season_test$humidity_index ~ add_season_test$Case_Count_7Day_Avg, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+
++ Step 11: Observe the P-value of the Linear Model
+
+```{r}
+# coefficients test
+summary(linearMod)$coefficients
+```
+
++ Step 7: Improve Linear Model By using the Log incident case values
+
+  + Step 7A: Scatter Plot 
+  
+    + Humidity vs Log Cases
+    
+```{r}
+# scatter plot of humidity index
+
+ggplot(data = add_season_test) +
+  geom_point(mapping = aes(x = humidity_index,
+                           y = log_cases,
+                           color = season,
+                           shape = season)) +
+  labs(x = "Humidity Index",
+       y = "Log(Number of COVID Cases)",
+       title = "Humidity Index vs Log(# Covid Cases)",
+       subtitle = "Stratified by Season") +
+  geom_smooth(mapping = aes(x = humidity_index,
+                           y = log_cases),
+              method = "lm",
+              se = F,
+              fullrange = T) +
+  theme_classic()
 ```
 
 
+  + Step 7B: Generate a Boxplot 
+    
+    + Humidity vs Log Cases
+    
+```{r}
+# boxplot
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(add_season_test$humidity_index,main="Humidity_Index")
+boxplot(add_season_test$log_cases,main="COVID cases")
+```
+
+  + Step 7C: Compute the Correlation Coefficient
+  
+```{r}
+# correlation
+cor(add_season_test$humidity_index, add_season_test$log_cases)
+```
+
+  + Step 7D: Generate a Single Variable Linear Model
+  
+    + Humidity vs Log Cases
+
+```{r}
+# linear model of humidity_index
+linearMod <- lm(add_season_test$humidity_index ~ add_season_test$log_cases, data=add_season_test)  # build linear regression model on full data
+print(linearMod)
+```
+
+  + Step 7E: View the Coefficients of the Linear Model
+  
+    + P-value
+    
+```{r}
+# coefficients test
+summary(linearMod)$coefficients
+```
+
+# **AIM 2**
+
+## 1. Is There an Association between UV Index and COVID Incidence?
+
++ Step 1: Read in UV data
+
+```{r}
+nyc_uv_level <- read.csv("data/uv_total_level.csv")
+colnames(nyc_uv_level)[1] <- "Date"
+nyc_uv_level$Date <- mdy(nyc_uv_level$Date)
+nyc_uv_level <- nyc_uv_level[order(nyc_uv_level$Date),]
+
+# change date type from ymd to mdy
+nyc_uv_level$Date <-format(as.Date(nyc_uv_level$Date, '%Y/%m/%d'), "%m/%d/%Y")
+
+# rownames
+rownames(nyc_uv_level) <- c(1:nrow(nyc_uv_level))
+```
+
++ Step 2: Join Data Frames using SQL in R (using "sqldf" package)
+
+```{r, eval=FALSE}
+
+total_df=sqldf("select * from add_season_test
+      left join nyc_uv_level 
+      on add_season_test.date = nyc_uv_level.Date")
+```
+
++ Step 3: Delete the "City" variable
+
+  + Every observation is "new york city"
+```{r, eval=FALSE}
+total_df <- select(total_df,-City)
+```
+
++ Step 4: Generate a Scatter Plot
+
+  + UV vs Case Count
+  
+```{r, eval=FALSE}
+
+ggplot(data = total_df) +
+  geom_point(mapping = aes(x = UV,
+                           y = Case_Count_7Day_Avg,
+                           color = season,
+                           shape = season)) +
+  labs(x="UV", 
+       y ="Number of COVID Cases",
+       title="UV vs Number of COVID Cases") +
+  theme_classic() +
+  geom_smooth(mapping = aes(x = UV,
+                            y = Case_Count_7Day_Avg),
+              method = "lm",
+              inherit.aes = F)
+``` 
+
++ Step 5: Generate a Boxplot 
+```{r, eval=FALSE}
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(total_df$UV,main="UV")
+boxplot(total_df$Case_Count_7Day_Avg,main="COVID cases")
+```
+
++ Step 6: Compute Correlation Between UV and Cases
+
+```{r, eval=FALSE}
+cor(total_df$UV, total_df$Case_Count_7Day_Avg)
+```
+
++ Step 7: Single vVariable Linear Regression Model
+
+  + UV vs Cases
+
+```{r, eval=FALSE}
+linearMod <- lm(total_df$UV ~ total_df$Case_Count_7Day_Avg, data=total_df)  # build linear regression model on full data
+print(linearMod)
+```
+
++ Step 8: Check UV ~ Cases P-value
+
+```{r,eval=FALSE}
+summary(linearMod)$coefficients
+```
+
++ Step 9: Generate a Scatter Plot
+
+  + UV ~ Cases to UV ~ log(cases)
+  
+```{r, eval=FALSE}
+ggplot(total_df,aes(x=`UV`,y=`log_cases`,color=levels,shape=levels))+
+  geom_point()+ #this controls the scatter plots
+  labs(x="UV", y ="log_cases",title="UV ~ log cases Scatter Plot")+theme_classic()+geom_smooth(aes(x=`UV`,y=`log_cases`),method="lm",inherit.aes=F)
+```
+
++ Step 10: Generate a Boxplot
+
+  + UV ~ Cases to UV ~ log(cases)
+
+```{r, eval=FALSE}
+par(mfrow=c(1, 2))  # divide graph area in 2 columns
+boxplot(total_df$UV,main="UV")
+boxplot(total_df$log_cases,main="log cases")
+```
+
++ Step 11: Compute the Correlation Between UV and log(cases)
+
+```{r, eval=FALSE}
+cor(total_df$UV, total_df$log_cases)
+```
+
++ Step 12: Generate a Single Variable Linear Regression Model
+
+  + UV ~ log(cases)
+
+```{r, eval=FALSE}
+linearMod <- lm(total_df$UV ~ total_df$log_cases, data=total_df)  # build linear regression model on full data
+print(linearMod)
+```
+
++ Step 13: Check UV~ log cases P-value
+
+```{r, eval=FALSE}
+summary(linearMod)$coefficients
+```
+
+# Predictive Model
+
+```{r}
+# Load Data
+nyc <- readRDS("data/nycnew.rds")
+covid <- read.csv("data/NYC_COVID_DATA/NYC_Covid_Data.csv")
+uv <- read.csv("data/uv_total.csv")
+rawdata <- ts(covid$all_case_count_7day_avg, start = c(2020,03,01), frequency = 365)
+weather <- ts(nyc, start = c(2020,03,01), frequency = 365)
+ultraviolet <- ts(uv$UV, start = c(2020,03,01), frequency = 365)
+```
+
+```{r}
+#Basic timeseries visulization and prepare for the model
+rawdata %>% ggtsdisplay()
+rawdata %>% diff() %>%ggtsdisplay()
+```
+
+```{r}
+#build best arima model and check the residuals
+fit <- auto.arima(rawdata, biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
+summary(fit)
+#fit <- arima(case_count, order = c(3,1,0))
+checkresiduals(fit)
+```
+
+```{r}
+#Make prediction
+fit %>% forecast(h=20) %>% autoplot()
+```
+
+
+```{r}
+temperature <- ts(nyc$Day.Average.Temp, start = c(2020,03,01),frequency = 365)
+humidity <- ts(nyc$Humidity, start = c(2020,03,01),frequency = 365)
+
+# temperature and humidity as outer variables for the models
+fit2 <- auto.arima(rawdata, xreg = cbind(humidity), biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
+
+summary(fit2)
+checkresiduals(fit2)
+```
+
+```{r}
+# intro the ultraviolet as the variables
+fit3 <- auto.arima(rawdata, xreg = cbind(ultraviolet,temperature,humidity) , biasadj = TRUE, parallel = TRUE, stepwise = FALSE)
+summary(fit3)
+```
+
+# Build Library
+
++ Step 1: Create an R Package as a subdirectory of the project repository.
+
+  + Location: file = "QBS181final/library/ProjectLibrary"
+
++ Fill out the description 
+
++ Save custom functions in the "R" folder
+  
+  + Use "roxygen2" to generate out skeleton docstrings
+  
+  + Build the package 
+    
+    + Generate the manuals
+    
+```{r, fig.align='center', out.width="100%", out.height="100%", fig.cap="Custom Function Library: Package Documentation"}
+knitr::include_graphics(path = "images/package_documentation.png")
+```
