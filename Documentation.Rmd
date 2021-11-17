@@ -85,7 +85,7 @@ knitr::include_graphics(path = "images/QBS181_2.png")
 
 + Acquisition Method
 
-  + Webscraping/ API Tool
+  + Webscraping/github weatherWebScrapper folder
 
 + Purpose:
 
@@ -147,9 +147,9 @@ covid_df <- read.csv("data/Raw Data/nyc_covid19_data/NYC_Covid_Data_raw.csv")
   + \textcolor{green}{Solution:} Update column names while reading in the file!
 
 ```{r}
-#vector with acceptable column names
+#vector with original column names
 headers <- c("High.Temp", "Low.Temp", "Avg.Temp", "Precip",
-             "Dew.Point", "Humidity", "Date", "City")
+             "Dew.Point...F.", "Humidity", "Date", "City")
 
 #read in the raw data file
 weather.raw <- read.csv(file = "data/Raw Data/nyc_weather_raw.csv",
@@ -296,16 +296,26 @@ write.csv(x = weather.clean,
 + Step 8: Read in "nyc_clean_weather_add_season.csv" and reformat the "date" variable
 
   + Read in the file
+  + 
   
 ```{r}
 #vector with acceptable column names
 headers <- c("High.Temp", "Low.Temp", "Avg.Temp", "Precip",
-             "Dew.Point", "Humidity", "date", "City",
-             "Month", "season")
+    "Dew.Point...F.", "Humidity", "date", "City",
+    "Month", "season")
 add_season_nyc_weather <- read.csv(file = "data/nyc_clean_weather_add_season.csv", 
                                    header = T, 
                                    col.names = headers) %>%
   select(-City)
+## Clean column name using nlp
+# Get the index of the columns starts with "Dew"
+cols.E.index <- grep("Dew",colnames(add_season_nyc_weather))
+
+# Save the original column name in a vector
+v <- colnames(add_season_nyc_weather[cols.E.index])
+
+# Modify the column name to "Dew.Point"
+colnames(add_season_nyc_weather)[cols.E.index] <- gsub("Dew.Point...F.","Dew.Point",v)
 ```
 
   + Reformat the "date" variable
@@ -474,9 +484,19 @@ add_season_test$Case_Count_7Day_Avg <- covid_df[,"CASE_COUNT_7DAY_AVG"]
 + Step 2: Create a df with ONLY the summer and winter observations
 
   + Code
+  + Bar Chart
 ```{r}
 sum_win <- add_season_test %>%
   dplyr::filter(season == "summer" | season == "winter")
+# create summer and winter bar chart
+# Create a new dataframe to include the variables needed in the plot
+season.covid <- data.frame(season=sum_win$season,covid_cases=sum_win$Case_Count_7Day_Avg)
+# Make a bar chart between season categorical data and covid cases
+ggplot(season.covid, aes(x = season, y = covid_cases, fill=season)) +
+  geom_bar(stat="summary", fun="mean")+
+  labs(title="Seasons VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="Seasons")+
+  scale_fill_brewer(name = "Seasons",palette="Blues")+
+  theme_minimal()
 ```
 
 + Step 3: Run a Wilcox Test to test the difference in COVID incidence (summer vs winter)
@@ -513,8 +533,8 @@ ggplot(data = add_season_test) +
 
 ```{r}
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(add_season_test$Avg.Temp,main="Temperature")
-boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+boxplot(add_season_test$Avg.Temp,main="Temperature",col="#f4a261")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases",col="#5390d9")
 ```
 
 + Step 3: Generate a Bar Graph
@@ -571,7 +591,7 @@ ggplot(data = add_season_test) +
                            y = log_cases,
                            color = season,
                            shape = season)) +
-  labs(x="Humidity_index", 
+  labs(x="Temperature", 
        y ="Log Number of COVID Cases",
        title="Temperature VS Log COVID-19 Incidence",
        subtitle = "Stratified by Season") +
@@ -657,13 +677,12 @@ add_season_test$humidity_index <- add_season_test$Precip+add_season_test$Dew.Poi
 count(add_season_test[is.na(add_season_test$humidity_index),])
 ```
 
-+ Step 7: Generate a Scatter Plot
++ Step 7: Generate a Scatter Plot 
 
   + Humidity vs Cases
   
 ```{r}
 # scatter plot of  humidity index
-
 ggplot(data = add_season_test) +
   geom_point(mapping = aes(x = humidity_index,
                            y = Case_Count_7Day_Avg,
@@ -687,8 +706,8 @@ ggplot(data = add_season_test) +
 ```{r}
 # boxplot
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(add_season_test$humidity_index,main="Humidity_Index")
-boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases")
+boxplot(add_season_test$humidity_index,main="Humidity_Index",col="#ddb892")
+boxplot(add_season_test$Case_Count_7Day_Avg,main="COVID cases",col="#a8dadc")
 ```
 
 + Step 9: Compute the Correlation Coefficient
@@ -800,10 +819,10 @@ rownames(nyc_uv_level) <- c(1:nrow(nyc_uv_level))
 
 + Step 2: Join Data Frames using SQL in R (using "sqldf" package)
 
-```{r, eval=FALSE}
-
+```{r, eval=TRUE}
+library(sqldf)
 total_df=sqldf("select * from add_season_test
-      left join nyc_uv_level 
+      left join nyc_uv_level
       on add_season_test.date = nyc_uv_level.Date")
 ```
 
@@ -814,12 +833,24 @@ total_df=sqldf("select * from add_season_test
 total_df <- select(total_df,-City)
 ```
 
-+ Step 4: Generate a Scatter Plot
++ Step 4: Generate a Bar Chart and a Scatter Plot
 
   + UV vs Case Count
+```{r}
+# Create a new dataframe to include the variables needed in the plot
+uv.levels.covid <- data.frame(uv_levels=total_df$levels,covid_cases=total_df$Case_Count_7Day_Avg)
+# Sort the uv_levels from low to high
+uv.levels.covid$uv_levels <- factor(uv.levels.covid$uv_levels,levels = c("low", "moderate", "high")) 
+# Make a bar chart between uv categorical data and covid cases
+ggplot(uv.levels.covid, aes(x = uv_levels, y = covid_cases, fill=uv_levels)) +
+  geom_bar(stat="summary", fun="mean")+
+  labs(title="UV Levels VS Covid Cases",y="Average Covid Cases (03/01/2020-10/31/2021)", x="UV Levels")+
+  scale_fill_brewer(name = "UV Levels",palette="Oranges")+
+  theme_minimal()
+```
   
 ```{r, eval=FALSE}
-
+# Scatter Plot
 ggplot(data = total_df) +
   geom_point(mapping = aes(x = UV,
                            y = Case_Count_7Day_Avg,
@@ -838,8 +869,8 @@ ggplot(data = total_df) +
 + Step 5: Generate a Boxplot 
 ```{r, eval=FALSE}
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(total_df$UV,main="UV")
-boxplot(total_df$Case_Count_7Day_Avg,main="COVID cases")
+boxplot(total_df$UV,main="UV",col="#cdb4db")
+boxplot(total_df$Case_Count_7Day_Avg,main="COVID cases",col="#bde0fe")
 ```
 
 + Step 6: Compute Correlation Between UV and Cases
@@ -869,27 +900,16 @@ summary(linearMod)$coefficients
   
 ```{r, eval=FALSE}
 ggplot(total_df,aes(x=`UV`,y=`log_cases`,color=levels,shape=levels))+
-  geom_point()+ #this controls the scatter plots
+  geom_point()+
   labs(x="UV", y ="log_cases",title="UV ~ log cases Scatter Plot")+theme_classic()+geom_smooth(aes(x=`UV`,y=`log_cases`),method="lm",inherit.aes=F)
 ```
-
-+ Step 10: Generate a Boxplot
-
-  + UV ~ Cases to UV ~ log(cases)
-
-```{r, eval=FALSE}
-par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(total_df$UV,main="UV")
-boxplot(total_df$log_cases,main="log cases")
-```
-
-+ Step 11: Compute the Correlation Between UV and log(cases)
++ Step 10: Compute the Correlation Between UV and log(cases)
 
 ```{r, eval=FALSE}
 cor(total_df$UV, total_df$log_cases)
 ```
 
-+ Step 12: Generate a Single Variable Linear Regression Model
++ Step 11: Generate a Single Variable Linear Regression Model
 
   + UV ~ log(cases)
 
@@ -898,7 +918,7 @@ linearMod <- lm(total_df$UV ~ total_df$log_cases, data=total_df)  # build linear
 print(linearMod)
 ```
 
-+ Step 13: Check UV~ log cases P-value
++ Step 12: Check UV~ log cases P-value
 
 ```{r, eval=FALSE}
 summary(linearMod)$coefficients
