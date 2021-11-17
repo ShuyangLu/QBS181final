@@ -1,0 +1,162 @@
+---
+title: "uv process final"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## R Markdown
+
+This is an R Markdown document. 
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+# read the 2020 csv file 
+read the csv file from the website we collected of year 2020 ultraviolet rays as "uv" for each day in a year.
+```{r }
+#read the csv
+uv_2020 <- read.csv("data/2020uv.csv")
+```
+
+# melt
+
+use the reshape2 library to melt the data we collect to 3 columns which is day, month, uv
+
+```{r}
+library(reshape2)
+# wide-format change
+new_2020uv <- as.data.frame(melt(uv_2020,id.vars=c("Day")))
+#change column names
+colnames(new_2020uv)[2] <- "Month"
+colnames(new_2020uv)[3] <- "UV"
+```
+
+# missing data 
+do the missing data correction, because feburary only have 29 days, we need get rid of the NA in those certain dates.
+
+```{r}
+# delete February 
+library(tidyverse)
+test_2020 <- new_2020uv %>%
+  filter(!is.na(UV))
+```
+```{r}
+# add year column
+
+test_2020 <- mutate(test_2020, Year = 2020)
+
+
+
+```
+
+# generate the date 
+use the function to convert month to number and then merge the day, month, year together to generate a new column date.
+```{r}
+#function to change month to number
+numMonth <- function(x) {
+    months <- list(jan=1,feb=2,mar=3,apr=4,may=5,jun=6,jul=7,aug=8,sep=9,oct=10,nov=11,dec=12)
+    x <- tolower(x)
+    sapply(x,function(x) months[[x]])
+}
+#new column numeric month
+test_2020$Month_change=numMonth(test_2020$Month)
+#past day-month-year together
+test_2020$date = paste(test_2020$Month_change,test_2020$Day,test_2020$Year,sep = '/')
+
+```
+
+# lubridate
+use the "lubridate" library to make the date to date that can be recognized by R
+```{r}
+#make the 2020 date as order we want 
+library(lubridate)
+test_2020$new_date=mdy(test_2020$date)
+
+```
+
+# import 2021 csv file 
+```{r}
+# import 2021 UV data
+uv_2021 <- read.csv("data/2021uv.csv")
+```
+
+# melt
+
+use the reshape2 library to melt the data we collect to 3 columns which is day, month, uv
+```{r}
+#change the first column name
+colnames(uv_2021)[1]="Day"
+# wide-format change
+new_2021uv <- as.data.frame(melt(uv_2021,id.vars=c("Day")))
+#change column names
+colnames(new_2021uv)[2] <- "Month"
+colnames(new_2021uv)[3] <- "UV"
+```
+
+# missing data
+
+do the missing data correction, because Feburary only have 29 days, we need get rid of the NA in those certain dates.
+```{r}
+# delete February 
+library(tidyverse)
+test_2021 <- new_2021uv %>%
+  filter(!is.na(UV))
+```
+```{r}
+# add year new column
+
+test_2021 <- mutate(test_2021, Year = 2021)
+
+
+
+```
+
+# generate the date
+
+use the function to convert month to number and then merge the day, month, year together to generate a new column date.
+```{r}
+#new column numeric month
+test_2021$Month_change=numMonth(test_2021$Month)
+#past day-month-year together
+test_2021$date = paste(test_2021$Month_change,test_2021$Day,test_2021$Year,sep = '/')
+
+```
+
+
+```{r}
+#make the date accessible
+test_2021$new_date=mdy(test_2021$date)
+#fail reason for 11/31/2021: no UV data
+```
+# rbind
+
+bind the data from 2020 and the data from 2021
+```{r}
+#r bind the two year together
+uv_df=rbind(test_2020,test_2021)
+
+```
+
+# add city 
+add the city name for each of the date and related uv
+```{r}
+#select the columns we need
+uv_final=select(uv_df,new_date, UV)
+#add a new column for city name
+uv_final <- mutate(uv_final, City = "New York")
+```
+
+# filter
+filter the period of time period we needed for our project
+```{r}
+#take out the period we want from 2020-03-01 to 2021-10-31
+uv_final$new_date = as.Date(uv_final$new_date, format= "%Y-%m-%d")
+uv_select=subset(uv_final, new_date> "2020-02-29" & new_date < "2021-11-01")
+
+```
+
+
