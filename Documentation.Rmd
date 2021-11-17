@@ -760,26 +760,14 @@ ggplot(data = add_season_test) +
   theme_classic()
 ```
 
-
-  + Step 7B: Generate a Boxplot 
-    
-    + Humidity vs Log Cases
-    
-```{r}
-# boxplot
-par(mfrow=c(1, 2))  # divide graph area in 2 columns
-boxplot(add_season_test$humidity_index,main="Humidity_Index")
-boxplot(add_season_test$log_cases,main="COVID cases")
-```
-
-  + Step 7C: Compute the Correlation Coefficient
+  + Step 7B: Compute the Correlation Coefficient
   
 ```{r}
 # correlation
 cor(add_season_test$humidity_index, add_season_test$log_cases)
 ```
 
-  + Step 7D: Generate a Single Variable Linear Model
+  + Step 7C: Generate a Single Variable Linear Model
   
     + Humidity vs Log Cases
 
@@ -789,7 +777,7 @@ linearMod <- lm(add_season_test$humidity_index ~ add_season_test$log_cases, data
 print(linearMod)
 ```
 
-  + Step 7E: View the Coefficients of the Linear Model
+  + Step 7D: View the Coefficients of the Linear Model
   
     + P-value
     
@@ -867,7 +855,7 @@ ggplot(data = total_df) +
 ``` 
 
 + Step 5: Generate a Boxplot 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 par(mfrow=c(1, 2))  # divide graph area in 2 columns
 boxplot(total_df$UV,main="UV",col="#cdb4db")
 boxplot(total_df$Case_Count_7Day_Avg,main="COVID cases",col="#bde0fe")
@@ -879,7 +867,7 @@ boxplot(total_df$Case_Count_7Day_Avg,main="COVID cases",col="#bde0fe")
 cor(total_df$UV, total_df$Case_Count_7Day_Avg)
 ```
 
-+ Step 7: Single vVariable Linear Regression Model
++ Step 7: Single Variable Linear Regression Model
 
   + UV vs Cases
 
